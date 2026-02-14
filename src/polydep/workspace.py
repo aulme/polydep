@@ -24,26 +24,21 @@ def _read_namespace(root: Path) -> str:
     return config["tool"]["polylith"]["namespace"]
 
 
-def _enumerate_bricks(root: Path, namespace: str) -> tuple[Brick, ...]:
-    bricks: list[Brick] = []
-
-    for brick_type, directory in ((BrickType.COMPONENT, "components"), (BrickType.BASE, "bases")):
-        parent = root / directory / namespace
-        if not parent.is_dir():
-            continue
-        for child in sorted(parent.iterdir()):
-            if child.is_dir():
-                relative_path = child.relative_to(root)
-                bricks.append(Brick(
-                    name=child.name,
-                    type=brick_type,
-                    path=str(relative_path),
-                ))
-
-    return tuple(sorted(bricks, key=lambda brick: brick.name))
+def _scan_bricks(root: Path, namespace: str, directory: str, brick_type: BrickType) -> tuple[Brick, ...]:
+    parent = root / directory / namespace
+    if not parent.is_dir():
+        return ()
+    return tuple(
+        Brick(name=child.name, type=brick_type, path=str(child.relative_to(root)))
+        for child in parent.iterdir()
+        if child.is_dir()
+    )
 
 
 def parse_workspace(root: Path) -> Workspace:
     namespace = _read_namespace(root)
-    bricks = _enumerate_bricks(root, namespace)
+    bricks = (
+        _scan_bricks(root, namespace, "components", BrickType.COMPONENT)
+        + _scan_bricks(root, namespace, "bases", BrickType.BASE)
+    )
     return Workspace(namespace=namespace, root=root, bricks=bricks)

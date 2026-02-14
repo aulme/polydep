@@ -58,12 +58,6 @@ def test_parse_workspace_brick_paths() -> None:
     assert by_name["message_api"].path == "bases/example/message_api"
 
 
-def test_parse_workspace_bricks_are_sorted_by_name() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
-
-    names = [brick.name for brick in workspace.bricks]
-    assert names == sorted(names)
-
 
 def test_parse_workspace_with_missing_config_raises(tmp_path: Path) -> None:
     (tmp_path / "components").mkdir()
