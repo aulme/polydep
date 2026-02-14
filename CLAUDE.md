@@ -31,7 +31,6 @@ All code must pass pytest, ruff check, ruff format --check, and ty check before 
 
 ## Code conventions
 
-- **Dataclasses with lists** for all data structures (plain `@dataclass`, not frozen)
 - **Type annotations** on all function parameters and return types. Python 3.11+ syntax (`str | None`, `list[X]`, `tuple[X, ...]`)
 - **No unnecessary abbreviations** — use `workspace` not `ws`, `brick` not `b`, `source_file` not `f`
 - **Small focused modules** — each file has a single responsibility
