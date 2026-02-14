@@ -91,6 +91,27 @@ def test_build_dependency_graph_excludes_unknown_namespace_imports() -> None:
     assert graph.edges == []
 
 
+def test_build_dependency_graph_edge_carries_import_provenance() -> None:
+    workspace = _make_workspace(
+        "ns",
+        [
+            _make_brick(
+                "a", "ns", imports=[Import(module="ns.b", line=5, statement="from ns import b")]
+            ),
+            _make_brick("b", "ns"),
+        ],
+    )
+
+    graph = build_dependency_graph(workspace)
+
+    assert len(graph.edges) == 1
+    edge = graph.edges[0]
+    assert len(edge.imports) == 1
+    assert edge.imports[0].file == "components/ns/a/core.py"
+    assert edge.imports[0].line == 5
+    assert edge.imports[0].statement == "from ns import b"
+
+
 def test_build_dependency_graph_deduplicates_edges() -> None:
     """Multiple imports from the same brick to the same target produce one edge."""
     workspace = _make_workspace(
@@ -112,6 +133,29 @@ def test_build_dependency_graph_deduplicates_edges() -> None:
 
     edge_set = {(edge.source, edge.target) for edge in graph.edges}
     assert edge_set == {("a", "b")}
+
+
+def test_build_dependency_graph_collects_all_imports_on_deduplicated_edge() -> None:
+    """Multiple imports to the same target are all collected on the single edge."""
+    workspace = _make_workspace(
+        "ns",
+        [
+            _make_brick(
+                "a",
+                "ns",
+                imports=[
+                    Import(module="ns.b", line=1, statement="from ns import b"),
+                    Import(module="ns.b.util", line=2, statement="from ns.b.util import helper"),
+                ],
+            ),
+            _make_brick("b", "ns"),
+        ],
+    )
+
+    graph = build_dependency_graph(workspace)
+
+    assert len(graph.edges) == 1
+    assert len(graph.edges[0].imports) == 2
 
 
 def test_build_dependency_graph_self_import_excluded() -> None:

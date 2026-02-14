@@ -37,9 +37,17 @@ class Workspace:
 
 
 @dataclass
+class ImportLocation:
+    file: str
+    line: int
+    statement: str
+
+
+@dataclass
 class Edge:
     source: str
     target: str
+    imports: list[ImportLocation] = field(default_factory=list)
 
 
 @dataclass
