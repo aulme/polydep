@@ -10,7 +10,6 @@ from polydep.models import (
 )
 from polydep.workspace import parse_workspace
 
-
 # --- Helpers for constructing test workspaces in memory ---
 
 
@@ -39,7 +38,9 @@ def test_build_dependency_graph_simple_edge() -> None:
     workspace = _make_workspace(
         "ns",
         (
-            _make_brick("a", "ns", imports=(Import(module="ns.b", line=1, statement="from ns import b"),)),
+            _make_brick(
+                "a", "ns", imports=(Import(module="ns.b", line=1, statement="from ns import b"),)
+            ),
             _make_brick("b", "ns"),
         ),
     )
@@ -78,7 +79,9 @@ def test_build_dependency_graph_excludes_unknown_namespace_imports() -> None:
             _make_brick(
                 "a",
                 "ns",
-                imports=(Import(module="ns.nonexistent", line=1, statement="from ns import nonexistent"),),
+                imports=(
+                    Import(module="ns.nonexistent", line=1, statement="from ns import nonexistent"),
+                ),
             ),
         ),
     )
@@ -146,7 +149,11 @@ def test_build_dependency_graph_deep_submodule_resolves_to_brick() -> None:
                 "a",
                 "ns",
                 imports=(
-                    Import(module="ns.b.sub.module", line=1, statement="from ns.b.sub.module import thing"),
+                    Import(
+                        module="ns.b.sub.module",
+                        line=1,
+                        statement="from ns.b.sub.module import thing",
+                    ),
                 ),
             ),
             _make_brick("b", "ns"),
@@ -164,8 +171,12 @@ def test_build_dependency_graph_multiple_bricks_with_shared_dependency() -> None
     workspace = _make_workspace(
         "ns",
         (
-            _make_brick("a", "ns", imports=(Import(module="ns.c", line=1, statement="from ns import c"),)),
-            _make_brick("b", "ns", imports=(Import(module="ns.c", line=1, statement="from ns import c"),)),
+            _make_brick(
+                "a", "ns", imports=(Import(module="ns.c", line=1, statement="from ns import c"),)
+            ),
+            _make_brick(
+                "b", "ns", imports=(Import(module="ns.c", line=1, statement="from ns import c"),)
+            ),
             _make_brick("c", "ns"),
         ),
     )

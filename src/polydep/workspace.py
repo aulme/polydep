@@ -1,8 +1,8 @@
 import tomllib
 from pathlib import Path
 
-from polydep.models import Brick, BrickType, SourceFile, Workspace
 from polydep.import_parser import extract_imports_from_source
+from polydep.models import Brick, BrickType, SourceFile, Workspace
 
 
 def _read_namespace(root: Path) -> str:
@@ -35,7 +35,12 @@ def _scan_files(root: Path, brick_path: Path, namespace: str) -> tuple[SourceFil
     )
 
 
-def _scan_bricks(root: Path, namespace: str, directory: str, brick_type: BrickType) -> tuple[Brick, ...]:
+def _scan_bricks(
+    root: Path,
+    namespace: str,
+    directory: str,
+    brick_type: BrickType,
+) -> tuple[Brick, ...]:
     parent = root / directory / namespace
     if not parent.is_dir():
         return ()
@@ -53,8 +58,7 @@ def _scan_bricks(root: Path, namespace: str, directory: str, brick_type: BrickTy
 
 def parse_workspace(root: Path) -> Workspace:
     namespace = _read_namespace(root)
-    bricks = (
-        _scan_bricks(root, namespace, "components", BrickType.COMPONENT)
-        + _scan_bricks(root, namespace, "bases", BrickType.BASE)
+    bricks = _scan_bricks(root, namespace, "components", BrickType.COMPONENT) + _scan_bricks(
+        root, namespace, "bases", BrickType.BASE
     )
     return Workspace(namespace=namespace, root=root, bricks=bricks)

@@ -15,12 +15,15 @@ def _reconstruct_statement(node: ast.Import | ast.ImportFrom) -> str:
 def _parse_plain_imports(node: ast.Import, statement: str) -> list[Import]:
     """`import X` or `import X, Y` — one Import per name."""
     return [
-        Import(module=alias.name, line=node.lineno, statement=statement)
-        for alias in node.names
+        Import(module=alias.name, line=node.lineno, statement=statement) for alias in node.names
     ]
 
 
-def _parse_imports_from_namespace(node: ast.ImportFrom, namespace: str, statement: str) -> list[Import]:
+def _parse_imports_from_namespace(
+    node: ast.ImportFrom,
+    namespace: str,
+    statement: str,
+) -> list[Import]:
     """`from <namespace> import X, Y` — qualify each name as <namespace>.X."""
     return [
         Import(module=f"{namespace}.{alias.name}", line=node.lineno, statement=statement)

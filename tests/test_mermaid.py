@@ -68,14 +68,7 @@ def test_generate_mermaid_components_only() -> None:
 
     result = generate_mermaid(graph)
 
-    assert result == (
-        "graph LR\n"
-        "  subgraph components\n"
-        "    a\n"
-        "    b\n"
-        "  end\n"
-        "  a --> b\n"
-    )
+    assert result == ("graph LR\n  subgraph components\n    a\n    b\n  end\n  a --> b\n")
 
 
 def test_generate_mermaid_bases_only() -> None:
@@ -89,14 +82,7 @@ def test_generate_mermaid_bases_only() -> None:
 
     result = generate_mermaid(graph)
 
-    assert result == (
-        "graph LR\n"
-        "  subgraph bases\n"
-        "    x\n"
-        "    y\n"
-        "  end\n"
-        "  x --> y\n"
-    )
+    assert result == ("graph LR\n  subgraph bases\n    x\n    y\n  end\n  x --> y\n")
 
 
 def test_generate_mermaid_sorts_bricks_alphabetically() -> None:
@@ -110,14 +96,7 @@ def test_generate_mermaid_sorts_bricks_alphabetically() -> None:
 
     result = generate_mermaid(graph)
 
-    assert result == (
-        "graph LR\n"
-        "  subgraph components\n"
-        "    apple\n"
-        "    mango\n"
-        "    zebra\n"
-        "  end\n"
-    )
+    assert result == ("graph LR\n  subgraph components\n    apple\n    mango\n    zebra\n  end\n")
 
 
 def test_generate_mermaid_sorts_edges() -> None:
@@ -136,14 +115,7 @@ def test_generate_mermaid_sorts_edges() -> None:
     result = generate_mermaid(graph)
 
     assert result == (
-        "graph LR\n"
-        "  subgraph components\n"
-        "    a\n"
-        "    b\n"
-        "    c\n"
-        "  end\n"
-        "  a --> b\n"
-        "  c --> a\n"
+        "graph LR\n  subgraph components\n    a\n    b\n    c\n  end\n  a --> b\n  c --> a\n"
     )
 
 

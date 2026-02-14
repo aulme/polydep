@@ -43,7 +43,6 @@ def test_graph_command(sample_project: Path) -> None:
     )
 
 
-
 def test_graph_command_fails_when_no_workspace_found(tmp_path: Path) -> None:
     runner = CliRunner()
 

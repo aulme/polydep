@@ -85,7 +85,6 @@ def test_parse_workspace_populates_files_recursively(sample_project: Path) -> No
     }
 
 
-
 def test_parse_workspace_with_missing_config_raises(tmp_path: Path) -> None:
     (tmp_path / "components").mkdir()
     (tmp_path / "bases").mkdir()
