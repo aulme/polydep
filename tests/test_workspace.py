@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from polydep.models import Brick, BrickType, Workspace
+from polydep.models import BrickType
 from polydep.workspace import parse_workspace
 
 SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
@@ -56,6 +56,35 @@ def test_parse_workspace_brick_paths() -> None:
     assert by_name["greet_api"].path == "bases/example/greet_api"
     assert by_name["consumer"].path == "bases/example/consumer"
     assert by_name["message_api"].path == "bases/example/message_api"
+
+
+def test_parse_workspace_populates_files_for_simple_brick() -> None:
+    workspace = parse_workspace(SAMPLE_PROJECT)
+
+    by_name = {brick.name: brick for brick in workspace.bricks}
+    greeting = by_name["greeting"]
+
+    file_paths = {source_file.path for source_file in greeting.files}
+    assert file_paths == {
+        "components/example/greeting/__init__.py",
+        "components/example/greeting/core.py",
+    }
+
+
+def test_parse_workspace_populates_files_recursively() -> None:
+    workspace = parse_workspace(SAMPLE_PROJECT)
+
+    by_name = {brick.name: brick for brick in workspace.bricks}
+    database = by_name["database"]
+
+    file_paths = {source_file.path for source_file in database.files}
+    assert file_paths == {
+        "components/example/database/__init__.py",
+        "components/example/database/core.py",
+        "components/example/database/message/__init__.py",
+        "components/example/database/message/crud.py",
+        "components/example/database/message/model.py",
+    }
 
 
 

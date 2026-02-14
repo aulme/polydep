@@ -1,7 +1,8 @@
 import tomllib
 from pathlib import Path
 
-from polydep.models import Brick, BrickType, Workspace
+from polydep.models import Brick, BrickType, SourceFile, Workspace
+from polydep.import_parser import extract_imports_from_source
 
 
 def _read_namespace(root: Path) -> str:
@@ -24,12 +25,27 @@ def _read_namespace(root: Path) -> str:
     return config["tool"]["polylith"]["namespace"]
 
 
+def _scan_files(root: Path, brick_path: Path, namespace: str) -> tuple[SourceFile, ...]:
+    return tuple(
+        SourceFile(
+            path=str(py_file.relative_to(root)),
+            imports=extract_imports_from_source(py_file.read_text(), namespace),
+        )
+        for py_file in brick_path.rglob("*.py")
+    )
+
+
 def _scan_bricks(root: Path, namespace: str, directory: str, brick_type: BrickType) -> tuple[Brick, ...]:
     parent = root / directory / namespace
     if not parent.is_dir():
         return ()
     return tuple(
-        Brick(name=child.name, type=brick_type, path=str(child.relative_to(root)))
+        Brick(
+            name=child.name,
+            type=brick_type,
+            path=str(child.relative_to(root)),
+            files=_scan_files(root, child, namespace),
+        )
         for child in parent.iterdir()
         if child.is_dir()
     )

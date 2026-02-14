@@ -9,10 +9,24 @@ class BrickType(str, Enum):
 
 
 @dataclass(frozen=True)
+class Import:
+    module: str
+    line: int
+    statement: str
+
+
+@dataclass(frozen=True)
+class SourceFile:
+    path: str
+    imports: tuple[Import, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
 class Brick:
     name: str
     type: BrickType
     path: str
+    files: tuple[SourceFile, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
