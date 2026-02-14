@@ -34,3 +34,16 @@ class Workspace:
     namespace: str
     root: Path
     bricks: tuple[Brick, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class Edge:
+    source: str
+    target: str
+
+
+@dataclass(frozen=True)
+class DependencyGraph:
+    namespace: str
+    bricks: tuple[Brick, ...]
+    edges: tuple[Edge, ...] = field(default_factory=tuple)
