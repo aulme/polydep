@@ -43,6 +43,19 @@ def test_graph_command(sample_project: Path) -> None:
     )
 
 
+def test_graph_command_save(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(main, ["graph", "--save", "--root", str(sample_project)])
+
+        assert result.exit_code == 0
+        assert result.output == ""
+        saved = Path("polydep.expected.mermaid").read_text()
+        assert saved.startswith("graph LR\n")
+        assert "consumer --> kafka\n" in saved
+
+
 def test_graph_command_fails_when_no_workspace_found(tmp_path: Path) -> None:
     runner = CliRunner()
 

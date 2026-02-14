@@ -16,14 +16,19 @@ def main() -> None:
 
 @main.command()
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
-def graph(root: Path) -> None:
+@click.option("--save", is_flag=True, help="Save to polydep.expected.mermaid instead of printing.")
+def graph(root: Path, save: bool) -> None:
     """Print the dependency graph as a Mermaid diagram."""
     try:
         workspace = parse_workspace(root)
     except FileNotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
     dependency_graph = build_dependency_graph(workspace)
-    click.echo(generate_mermaid(dependency_graph), nl=False)
+    output = generate_mermaid(dependency_graph)
+    if save:
+        Path("polydep.expected.mermaid").write_text(output)
+    else:
+        click.echo(output, nl=False)
 
 
 def _format_path(index: int, path: list[Edge]) -> str:
