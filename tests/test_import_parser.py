@@ -4,7 +4,7 @@ from polydep.models import Import
 from polydep.workspace import parse_workspace
 
 
-def _get_brick_imports(workspace_root: Path, brick_name: str) -> dict[str, tuple[Import, ...]]:
+def _get_brick_imports(workspace_root: Path, brick_name: str) -> dict[str, list[Import]]:
     """Return {relative_file_path: imports} for a given brick."""
     workspace = parse_workspace(workspace_root)
     by_name = {brick.name: brick for brick in workspace.bricks}
@@ -25,7 +25,7 @@ def test_extract_imports_from_simple_module(sample_project: Path) -> None:
     file_imports = _get_brick_imports(sample_project, "greeting")
 
     core_imports = file_imports["components/example/greeting/core.py"]
-    assert core_imports == ()
+    assert core_imports == []
 
 
 def test_extract_imports_from_module_with_cross_brick_imports(sample_project: Path) -> None:
@@ -89,7 +89,7 @@ def test_extract_imports_skips_relative_imports(tmp_path: Path) -> None:
 
     brick = workspace.bricks[0]
     core_file = next(f for f in brick.files if f.path.endswith("core.py"))
-    assert core_file.imports == ()
+    assert core_file.imports == []
 
 
 def test_extract_imports_includes_type_checking_block(tmp_path: Path) -> None:
@@ -119,4 +119,4 @@ def test_extract_imports_handles_syntax_error(tmp_path: Path) -> None:
 
     brick = workspace.bricks[0]
     broken_file = next(f for f in brick.files if f.path.endswith("broken.py"))
-    assert broken_file.imports == ()
+    assert broken_file.imports == []

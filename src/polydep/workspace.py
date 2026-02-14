@@ -25,14 +25,14 @@ def _read_namespace(root: Path) -> str:
     return config["tool"]["polylith"]["namespace"]
 
 
-def _scan_files(root: Path, brick_path: Path, namespace: str) -> tuple[SourceFile, ...]:
-    return tuple(
+def _scan_files(root: Path, brick_path: Path, namespace: str) -> list[SourceFile]:
+    return [
         SourceFile(
             path=str(py_file.relative_to(root)),
             imports=extract_imports_from_source(py_file.read_text(), namespace),
         )
         for py_file in brick_path.rglob("*.py")
-    )
+    ]
 
 
 def _scan_bricks(
@@ -40,11 +40,11 @@ def _scan_bricks(
     namespace: str,
     directory: str,
     brick_type: BrickType,
-) -> tuple[Brick, ...]:
+) -> list[Brick]:
     parent = root / directory / namespace
     if not parent.is_dir():
-        return ()
-    return tuple(
+        return []
+    return [
         Brick(
             name=child.name,
             type=brick_type,
@@ -53,7 +53,7 @@ def _scan_bricks(
         )
         for child in parent.iterdir()
         if child.is_dir()
-    )
+    ]
 
 
 def parse_workspace(root: Path) -> Workspace:

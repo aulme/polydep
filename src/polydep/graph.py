@@ -23,5 +23,5 @@ def build_dependency_graph(workspace: Workspace) -> DependencyGraph:
                     continue
                 seen.add((brick.name, target))
 
-    edges = tuple(Edge(source=source, target=target) for source, target in sorted(seen))
+    edges = [Edge(source=source, target=target) for source, target in sorted(seen)]
     return DependencyGraph(namespace=workspace.namespace, bricks=workspace.bricks, edges=edges)

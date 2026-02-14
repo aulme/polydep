@@ -36,7 +36,7 @@ def _parse_import_from_qualified_module(node: ast.ImportFrom, statement: str) ->
     return Import(module=node.module or "", line=node.lineno, statement=statement)
 
 
-def extract_imports_from_source(source: str, namespace: str) -> tuple[Import, ...]:
+def extract_imports_from_source(source: str, namespace: str) -> list[Import]:
     """Extract all absolute imports from Python source code.
 
     Walks the AST and collects imports into three categories:
@@ -52,12 +52,12 @@ def extract_imports_from_source(source: str, namespace: str) -> tuple[Import, ..
        so we use it as-is (e.g., "example.log" from `from example.log import get_logger`).
 
     Relative imports (level > 0) are skipped since they're internal to a brick.
-    Files with syntax errors return an empty tuple.
+    Files with syntax errors return an empty list.
     """
     try:
         tree = ast.parse(source)
     except SyntaxError:
-        return ()
+        return []
 
     imports: list[Import] = []
     for node in ast.walk(tree):
@@ -75,4 +75,4 @@ def extract_imports_from_source(source: str, namespace: str) -> tuple[Import, ..
         else:
             imports.append(_parse_import_from_qualified_module(node, statement))
 
-    return tuple(imports)
+    return imports

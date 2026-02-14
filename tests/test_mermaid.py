@@ -12,11 +12,11 @@ from polydep.workspace import parse_workspace
 
 
 def _make_graph(
-    bricks: tuple[Brick, ...] = (),
-    edges: tuple[Edge, ...] = (),
+    bricks: list[Brick] | None = None,
+    edges: list[Edge] | None = None,
     namespace: str = "ns",
 ) -> DependencyGraph:
-    return DependencyGraph(namespace=namespace, bricks=bricks, edges=edges)
+    return DependencyGraph(namespace=namespace, bricks=bricks or [], edges=edges or [])
 
 
 def _make_brick(name: str, brick_type: BrickType = BrickType.COMPONENT) -> Brick:
@@ -36,11 +36,11 @@ def test_generate_mermaid_empty_graph() -> None:
 
 def test_generate_mermaid_single_edge() -> None:
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("api", BrickType.BASE),
             _make_brick("log"),
-        ),
-        edges=(Edge(source="api", target="log"),),
+        ],
+        edges=[Edge(source="api", target="log")],
     )
 
     result = generate_mermaid(graph)
@@ -59,11 +59,11 @@ def test_generate_mermaid_single_edge() -> None:
 
 def test_generate_mermaid_components_only() -> None:
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("a"),
             _make_brick("b"),
-        ),
-        edges=(Edge(source="a", target="b"),),
+        ],
+        edges=[Edge(source="a", target="b")],
     )
 
     result = generate_mermaid(graph)
@@ -73,11 +73,11 @@ def test_generate_mermaid_components_only() -> None:
 
 def test_generate_mermaid_bases_only() -> None:
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("x", BrickType.BASE),
             _make_brick("y", BrickType.BASE),
-        ),
-        edges=(Edge(source="x", target="y"),),
+        ],
+        edges=[Edge(source="x", target="y")],
     )
 
     result = generate_mermaid(graph)
@@ -87,11 +87,11 @@ def test_generate_mermaid_bases_only() -> None:
 
 def test_generate_mermaid_sorts_bricks_alphabetically() -> None:
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("zebra"),
             _make_brick("apple"),
             _make_brick("mango"),
-        ),
+        ],
     )
 
     result = generate_mermaid(graph)
@@ -101,15 +101,15 @@ def test_generate_mermaid_sorts_bricks_alphabetically() -> None:
 
 def test_generate_mermaid_sorts_edges() -> None:
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("a"),
             _make_brick("b"),
             _make_brick("c"),
-        ),
-        edges=(
+        ],
+        edges=[
             Edge(source="c", target="a"),
             Edge(source="a", target="b"),
-        ),
+        ],
     )
 
     result = generate_mermaid(graph)
@@ -122,12 +122,12 @@ def test_generate_mermaid_sorts_edges() -> None:
 def test_generate_mermaid_leaf_brick_appears_in_subgraph() -> None:
     """A brick with no edges still appears in its subgraph."""
     graph = _make_graph(
-        bricks=(
+        bricks=[
             _make_brick("api", BrickType.BASE),
             _make_brick("db"),
             _make_brick("log"),
-        ),
-        edges=(Edge(source="api", target="log"),),
+        ],
+        edges=[Edge(source="api", target="log")],
     )
 
     result = generate_mermaid(graph)
