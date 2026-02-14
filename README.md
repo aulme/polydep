@@ -119,14 +119,6 @@ GitHub Actions runs three parallel jobs on every push and PR:
 - **lint** — `ruff check` + `ruff format --check`
 - **typecheck** — `ty check`
 
-### Architecture notes
-
-- All data structures are **frozen dataclasses** with tuples (immutable by design)
-- `import_parser.py` is a pure function: source string in, imports out — no filesystem access
-- `workspace.py` handles all filesystem concerns and returns a fully populated `Workspace`
-- `graph.py` takes a `Workspace` and returns a `DependencyGraph` — no I/O
-- The only runtime dependency is `click`
-
 ### Test strategy
 
 Tests use two approaches:
