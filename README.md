@@ -2,7 +2,7 @@
 
 Dependency graph and boundary enforcement for Python Polylith workspaces.
 
-`polydep` analyzes inter-brick imports in a [Polylith](https://polylith.gitbook.io/polylith) monorepo and outputs a Mermaid dependency graph. It complements the `poly` CLI by adding graph visualization, dependency chain explanation, and CI-friendly boundary checks.
+`polydep` analyzes inter-brick imports in a [Python Polylith](https://github.com/DavidVujworksic/python-polylith) monorepo and outputs a Mermaid dependency graph. It complements the `poly` CLI by adding graph visualization, dependency chain explanation, and CI-friendly boundary checks.
 
 Read-only — never modifies workspace files.
 
