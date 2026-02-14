@@ -10,8 +10,6 @@ from polydep.models import (
 )
 from polydep.workspace import parse_workspace
 
-SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
-
 
 # --- Helpers for constructing test workspaces in memory ---
 
@@ -181,8 +179,8 @@ def test_build_dependency_graph_multiple_bricks_with_shared_dependency() -> None
 # --- Integration tests using sample_project ---
 
 
-def test_build_dependency_graph_contains_all_bricks() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_build_dependency_graph_contains_all_bricks(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     graph = build_dependency_graph(workspace)
 
@@ -201,16 +199,16 @@ def test_build_dependency_graph_contains_all_bricks() -> None:
     }
 
 
-def test_build_dependency_graph_preserves_namespace() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_build_dependency_graph_preserves_namespace(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     graph = build_dependency_graph(workspace)
 
     assert graph.namespace == "example"
 
 
-def test_build_dependency_graph_has_expected_edges() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_build_dependency_graph_has_expected_edges(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     graph = build_dependency_graph(workspace)
 
@@ -232,8 +230,8 @@ def test_build_dependency_graph_has_expected_edges() -> None:
     }
 
 
-def test_build_dependency_graph_leaf_bricks_have_no_outgoing_edges() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_build_dependency_graph_leaf_bricks_have_no_outgoing_edges(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     graph = build_dependency_graph(workspace)
 
@@ -242,8 +240,8 @@ def test_build_dependency_graph_leaf_bricks_have_no_outgoing_edges() -> None:
     assert sources & leaf_bricks == set()
 
 
-def test_build_dependency_graph_excludes_self_imports() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_build_dependency_graph_excludes_self_imports(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     graph = build_dependency_graph(workspace)
 

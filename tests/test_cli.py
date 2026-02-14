@@ -4,12 +4,11 @@ from click.testing import CliRunner
 
 from polydep.cli import main
 
-SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
 
-def test_graph_command() -> None:
+def test_graph_command(sample_project: Path) -> None:
     runner = CliRunner()
 
-    result = runner.invoke(main, ["graph", "--root", str(SAMPLE_PROJECT)])
+    result = runner.invoke(main, ["graph", "--root", str(sample_project)])
 
     assert result.exit_code == 0
     assert result.output == (

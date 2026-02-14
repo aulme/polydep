@@ -3,8 +3,6 @@ from pathlib import Path
 from polydep.models import Import
 from polydep.workspace import parse_workspace
 
-SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
-
 
 def _get_brick_imports(workspace_root: Path, brick_name: str) -> dict[str, tuple[Import, ...]]:
     """Return {relative_file_path: imports} for a given brick."""
@@ -23,15 +21,15 @@ def _create_single_brick_workspace(tmp_path: Path, filename: str, content: str) 
     (brick_dir / filename).write_text(content)
 
 
-def test_extract_imports_from_simple_module() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "greeting")
+def test_extract_imports_from_simple_module(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "greeting")
 
     core_imports = file_imports["components/example/greeting/core.py"]
     assert core_imports == ()
 
 
-def test_extract_imports_from_module_with_cross_brick_imports() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "greet_api")
+def test_extract_imports_from_module_with_cross_brick_imports(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "greet_api")
 
     core_imports = file_imports["bases/example/greet_api/core.py"]
     modules = {imp.module for imp in core_imports}
@@ -39,8 +37,8 @@ def test_extract_imports_from_module_with_cross_brick_imports() -> None:
     assert "example.log" in modules
 
 
-def test_extract_imports_records_line_numbers() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "greet_api")
+def test_extract_imports_records_line_numbers(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "greet_api")
 
     core_imports = file_imports["bases/example/greet_api/core.py"]
     by_module = {imp.module: imp for imp in core_imports}
@@ -49,8 +47,8 @@ def test_extract_imports_records_line_numbers() -> None:
     assert by_module["example.log"].line == 4
 
 
-def test_extract_imports_records_statements() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "greet_api")
+def test_extract_imports_records_statements(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "greet_api")
 
     core_imports = file_imports["bases/example/greet_api/core.py"]
     by_module = {imp.module: imp for imp in core_imports}
@@ -59,16 +57,16 @@ def test_extract_imports_records_statements() -> None:
     assert by_module["example.log"].statement == "from example.log import get_logger"
 
 
-def test_extract_imports_includes_stdlib_and_third_party() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "message")
+def test_extract_imports_includes_stdlib_and_third_party(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "message")
 
     core_imports = file_imports["components/example/message/core.py"]
     modules = {imp.module for imp in core_imports}
     assert "json" in modules
 
 
-def test_extract_imports_from_brick_with_many_dependencies() -> None:
-    file_imports = _get_brick_imports(SAMPLE_PROJECT, "message")
+def test_extract_imports_from_brick_with_many_dependencies(sample_project: Path) -> None:
+    file_imports = _get_brick_imports(sample_project, "message")
 
     core_imports = file_imports["components/example/message/core.py"]
     modules = {imp.module for imp in core_imports}

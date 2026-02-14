@@ -10,8 +10,6 @@ from polydep.models import (
 )
 from polydep.workspace import parse_workspace
 
-SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
-
 
 def _make_graph(
     bricks: tuple[Brick, ...] = (),
@@ -169,8 +167,8 @@ def test_generate_mermaid_leaf_brick_appears_in_subgraph() -> None:
 # --- Integration test ---
 
 
-def test_generate_mermaid_sample_project() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_generate_mermaid_sample_project(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
     graph = build_dependency_graph(workspace)
 
     result = generate_mermaid(graph)

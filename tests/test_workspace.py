@@ -5,18 +5,16 @@ import pytest
 from polydep.models import BrickType
 from polydep.workspace import parse_workspace
 
-SAMPLE_PROJECT = Path(__file__).resolve().parent.parent / "sample_project"
 
-
-def test_parse_workspace_returns_correct_namespace_and_theme() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_returns_correct_namespace_and_theme(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     assert workspace.namespace == "example"
-    assert workspace.root == SAMPLE_PROJECT
+    assert workspace.root == sample_project
 
 
-def test_parse_workspace_finds_all_bricks() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_finds_all_bricks(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     names = {brick.name for brick in workspace.bricks}
     assert names == {
@@ -33,8 +31,8 @@ def test_parse_workspace_finds_all_bricks() -> None:
     }
 
 
-def test_parse_workspace_classifies_brick_types() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_classifies_brick_types(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     by_name = {brick.name: brick for brick in workspace.bricks}
 
@@ -45,8 +43,8 @@ def test_parse_workspace_classifies_brick_types() -> None:
         assert by_name[name].type == BrickType.BASE, f"{name} should be a base"
 
 
-def test_parse_workspace_brick_paths() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_brick_paths(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     by_name = {brick.name: brick for brick in workspace.bricks}
 
@@ -58,8 +56,8 @@ def test_parse_workspace_brick_paths() -> None:
     assert by_name["message_api"].path == "bases/example/message_api"
 
 
-def test_parse_workspace_populates_files_for_simple_brick() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_populates_files_for_simple_brick(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     by_name = {brick.name: brick for brick in workspace.bricks}
     greeting = by_name["greeting"]
@@ -71,8 +69,8 @@ def test_parse_workspace_populates_files_for_simple_brick() -> None:
     }
 
 
-def test_parse_workspace_populates_files_recursively() -> None:
-    workspace = parse_workspace(SAMPLE_PROJECT)
+def test_parse_workspace_populates_files_recursively(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
 
     by_name = {brick.name: brick for brick in workspace.bricks}
     database = by_name["database"]
