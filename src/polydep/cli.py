@@ -82,11 +82,22 @@ def why(source: str, target: str, root: Path) -> None:
         click.echo(_format_path(index, path))
 
 
+_DEFAULT_EXPECTED_FILE = "polydep.expected.mermaid"
+
+
 @main.command()
-@click.argument("expected_graph_file", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--expected",
+    type=click.Path(path_type=Path),
+    default=Path(_DEFAULT_EXPECTED_FILE),
+    help=f"Path to expected graph file (default: {_DEFAULT_EXPECTED_FILE}).",
+)
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
-def check(expected_graph_file: Path, root: Path) -> None:
+def check(expected: Path, root: Path) -> None:
     """Compare actual dependencies against an expected graph file."""
+    if not expected.exists():
+        raise click.ClickException(f"{expected} not found.")
+
     try:
         workspace = parse_workspace(root)
     except FileNotFoundError as exc:
@@ -94,7 +105,7 @@ def check(expected_graph_file: Path, root: Path) -> None:
 
     dependency_graph = build_dependency_graph(workspace)
     actual_edges = {(edge.source, edge.target): edge for edge in dependency_graph.edges}
-    expected_edges = parse_mermaid(expected_graph_file.read_text())
+    expected_edges = parse_mermaid(expected.read_text())
 
     unexpected = sorted(actual_edges.keys() - expected_edges)
     missing = sorted(expected_edges - actual_edges.keys())

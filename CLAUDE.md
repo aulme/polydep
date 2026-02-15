@@ -93,7 +93,7 @@ Generates a Mermaid diagram with subgraph grouping by brick type (bases vs compo
 Finds all paths from source to target brick using DFS with cycle detection. Each edge in a path carries import provenance (file, line, statement). Paths are sorted by length (direct first). Exit 0 whether path is found or not.
 
 ### `check`
-Compares actual dependency graph against an expected Mermaid file. Reports unexpected edges (with file/line provenance) and missing edges. Exit codes: 0 = match, 1 = mismatch, 2 = error.
+Compares actual dependency graph against an expected Mermaid file (default: `polydep.expected.mermaid`). Reports unexpected edges (with file/line provenance) and missing edges. Exit codes: 0 = match, 1 = mismatch, 2 = error.
 
 ### Mermaid parsing
 Regex-based parser that extracts edges from Mermaid syntax. Handles:

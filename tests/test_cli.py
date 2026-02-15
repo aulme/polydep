@@ -129,7 +129,22 @@ def test_check_command_passes_on_match(sample_project: Path, tmp_path: Path) -> 
     expected_file = tmp_path / "expected.mermaid"
     expected_file.write_text(graph_result.output)
 
-    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(sample_project)]
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Check passed.\n"
+
+
+def test_check_command_uses_default_path(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        Path("polydep.expected.mermaid").write_text(graph_result.output)
+
+        result = runner.invoke(main, ["check", "--root", str(sample_project)])
 
     assert result.exit_code == 0
     assert result.output == "Check passed.\n"
@@ -142,7 +157,9 @@ def test_check_command_detects_unexpected_edges(sample_project: Path, tmp_path: 
     expected_file = tmp_path / "expected.mermaid"
     expected_file.write_text(content)
 
-    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(sample_project)]
+    )
 
     assert result.exit_code == 1
     assert result.output == (
@@ -161,7 +178,9 @@ def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Pat
     expected_file = tmp_path / "expected.mermaid"
     expected_file.write_text(content)
 
-    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(sample_project)]
+    )
 
     assert result.exit_code == 1
     assert result.output == (
@@ -179,7 +198,9 @@ def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> Non
     expected_file = tmp_path / "expected.mermaid"
     expected_file.write_text(content)
 
-    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(sample_project)]
+    )
 
     assert result.exit_code == 1
     assert result.output == (
@@ -194,9 +215,12 @@ def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> Non
     )
 
 
-def test_check_command_file_not_found(sample_project: Path) -> None:
+def test_check_command_default_file_not_found(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    result = runner.invoke(main, ["check", "nonexistent.mermaid", "--root", str(sample_project)])
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(main, ["check"])
 
-    assert result.exit_code == 2
+    assert result.exit_code == 1
+    assert "polydep.expected.mermaid" in result.output
+    assert "not found" in result.output
