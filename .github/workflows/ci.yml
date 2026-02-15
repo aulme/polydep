@@ -61,8 +61,14 @@ jobs:
 
   publish:
     needs: release
+    runs-on: ubuntu-latest
+    environment: pypi
     permissions:
       id-token: write
-    uses: ./.github/workflows/publish.yml
-    with:
-      tag: ${{ needs.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Set version from release
+        run: sed -i "s/^version = .*/version = \"${{ needs.release.outputs.version }}\"/" pyproject.toml
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
