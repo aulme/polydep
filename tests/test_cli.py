@@ -183,18 +183,14 @@ def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Pat
     )
 
     assert result.exit_code == 1
-    assert result.output == (
-        "Check failed.\n"
-        "\n"
-        "Missing dependencies:\n"
-        "  greeting --> database\n"
-    )
+    assert result.output == ("Check failed.\n\nMissing dependencies:\n  greeting --> database\n")
 
 
 def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> None:
     runner = CliRunner()
     graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
-    content = graph_result.output.replace("  consumer --> kafka\n", "") + "  greeting --> database\n"
+    content = graph_result.output.replace("  consumer --> kafka\n", "")
+    content += "  greeting --> database\n"
     expected_file = tmp_path / "expected.mermaid"
     expected_file.write_text(content)
 

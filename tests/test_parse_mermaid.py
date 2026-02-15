@@ -5,7 +5,6 @@ from polydep.graph import build_dependency_graph
 from polydep.parse_mermaid import parse_mermaid
 from polydep.workspace import parse_workspace
 
-
 # --- Unit tests ---
 
 

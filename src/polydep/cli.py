@@ -122,7 +122,7 @@ def check(expected: Path, root: Path) -> None:
         for source, target in unexpected:
             click.echo(f"  {source} --> {target}")
             edge = actual_edges[(source, target)]
-            for location in sorted(edge.imports, key=lambda l: (l.file, l.line)):
+            for location in sorted(edge.imports, key=lambda loc: (loc.file, loc.line)):
                 click.echo(f"    {location.file}:{location.line}  {location.statement}")
 
     if missing:
