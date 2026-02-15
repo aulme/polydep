@@ -115,9 +115,12 @@ def test_why_command_unknown_brick(sample_project: Path) -> None:
 
     result = runner.invoke(main, ["why", "nonexistent", "greeting", "--root", str(sample_project)])
 
-    assert result.exit_code != 0
-    assert "nonexistent" in result.output
-    assert "not found" in result.output
+    assert result.exit_code == 1
+    assert result.output == (
+        "Error: Brick 'nonexistent' not found."
+        " Available bricks: consumer, database, dictionaries,"
+        " greet_api, greeting, kafka, log, message, message_api, schema\n"
+    )
 
 
 def test_check_command_passes_on_match(sample_project: Path, tmp_path: Path) -> None:
@@ -129,7 +132,7 @@ def test_check_command_passes_on_match(sample_project: Path, tmp_path: Path) -> 
     result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
 
     assert result.exit_code == 0
-    assert "passed" in result.output.lower()
+    assert result.output == "Check passed.\n"
 
 
 def test_check_command_detects_unexpected_edges(sample_project: Path, tmp_path: Path) -> None:
@@ -142,9 +145,13 @@ def test_check_command_detects_unexpected_edges(sample_project: Path, tmp_path: 
     result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
 
     assert result.exit_code == 1
-    assert "unexpected" in result.output.lower()
-    assert "consumer --> kafka" in result.output
-    assert "bases/example/consumer/core.py" in result.output
+    assert result.output == (
+        "Check failed.\n"
+        "\n"
+        "Unexpected dependencies:\n"
+        "  consumer --> kafka\n"
+        "    bases/example/consumer/core.py:3  from example import kafka, log\n"
+    )
 
 
 def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Path) -> None:
@@ -157,8 +164,12 @@ def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Pat
     result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
 
     assert result.exit_code == 1
-    assert "missing" in result.output.lower()
-    assert "greeting --> database" in result.output
+    assert result.output == (
+        "Check failed.\n"
+        "\n"
+        "Missing dependencies:\n"
+        "  greeting --> database\n"
+    )
 
 
 def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> None:
@@ -171,8 +182,16 @@ def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> Non
     result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
 
     assert result.exit_code == 1
-    assert "unexpected" in result.output.lower()
-    assert "missing" in result.output.lower()
+    assert result.output == (
+        "Check failed.\n"
+        "\n"
+        "Unexpected dependencies:\n"
+        "  consumer --> kafka\n"
+        "    bases/example/consumer/core.py:3  from example import kafka, log\n"
+        "\n"
+        "Missing dependencies:\n"
+        "  greeting --> database\n"
+    )
 
 
 def test_check_command_file_not_found(sample_project: Path) -> None:

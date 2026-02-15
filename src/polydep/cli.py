@@ -2,9 +2,10 @@ from pathlib import Path
 
 import click
 
-from polydep.graph import build_dependency_graph
 from polydep.generate_mermaid import generate_mermaid
+from polydep.graph import build_dependency_graph
 from polydep.models import Edge
+from polydep.parse_mermaid import parse_mermaid
 from polydep.paths import find_all_paths
 from polydep.workspace import parse_workspace
 
@@ -79,3 +80,44 @@ def why(source: str, target: str, root: Path) -> None:
     for index, path in enumerate(paths, start=1):
         click.echo()
         click.echo(_format_path(index, path))
+
+
+@main.command()
+@click.argument("expected_graph_file", type=click.Path(exists=True, path_type=Path))
+@click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
+def check(expected_graph_file: Path, root: Path) -> None:
+    """Compare actual dependencies against an expected graph file."""
+    try:
+        workspace = parse_workspace(root)
+    except FileNotFoundError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    dependency_graph = build_dependency_graph(workspace)
+    actual_edges = {(edge.source, edge.target): edge for edge in dependency_graph.edges}
+    expected_edges = parse_mermaid(expected_graph_file.read_text())
+
+    unexpected = sorted(actual_edges.keys() - expected_edges)
+    missing = sorted(expected_edges - actual_edges.keys())
+
+    if not unexpected and not missing:
+        click.echo("Check passed.")
+        return
+
+    click.echo("Check failed.")
+
+    if unexpected:
+        click.echo()
+        click.echo("Unexpected dependencies:")
+        for source, target in unexpected:
+            click.echo(f"  {source} --> {target}")
+            edge = actual_edges[(source, target)]
+            for location in sorted(edge.imports, key=lambda l: (l.file, l.line)):
+                click.echo(f"    {location.file}:{location.line}  {location.statement}")
+
+    if missing:
+        click.echo()
+        click.echo("Missing dependencies:")
+        for source, target in missing:
+            click.echo(f"  {source} --> {target}")
+
+    raise SystemExit(1)
