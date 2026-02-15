@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from polydep.generate_mermaid import generate_mermaid
 from polydep.graph import build_dependency_graph
-from polydep.mermaid import generate_mermaid
 from polydep.models import (
     Brick,
     BrickType,

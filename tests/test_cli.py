@@ -118,3 +118,66 @@ def test_why_command_unknown_brick(sample_project: Path) -> None:
     assert result.exit_code != 0
     assert "nonexistent" in result.output
     assert "not found" in result.output
+
+
+def test_check_command_passes_on_match(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(graph_result.output)
+
+    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+
+    assert result.exit_code == 0
+    assert "passed" in result.output.lower()
+
+
+def test_check_command_detects_unexpected_edges(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    content = graph_result.output.replace("  consumer --> kafka\n", "")
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(content)
+
+    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+
+    assert result.exit_code == 1
+    assert "unexpected" in result.output.lower()
+    assert "consumer --> kafka" in result.output
+    assert "bases/example/consumer/core.py" in result.output
+
+
+def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    content = graph_result.output + "  greeting --> database\n"
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(content)
+
+    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+
+    assert result.exit_code == 1
+    assert "missing" in result.output.lower()
+    assert "greeting --> database" in result.output
+
+
+def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    content = graph_result.output.replace("  consumer --> kafka\n", "") + "  greeting --> database\n"
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(content)
+
+    result = runner.invoke(main, ["check", str(expected_file), "--root", str(sample_project)])
+
+    assert result.exit_code == 1
+    assert "unexpected" in result.output.lower()
+    assert "missing" in result.output.lower()
+
+
+def test_check_command_file_not_found(sample_project: Path) -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["check", "nonexistent.mermaid", "--root", str(sample_project)])
+
+    assert result.exit_code == 2
