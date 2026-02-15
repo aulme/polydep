@@ -1,10 +1,32 @@
 [project]
 name = "polydep"
 version = "0.1.0"
+description = "Dependency graph and boundary enforcement for Python Polylith workspaces."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+authors = [
+    { name = "Aleksandrs Ulme", email = "aleksandrs.ulme@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
     "click>=8.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/aulme/polydep"
+Repository = "https://github.com/aulme/polydep"
+Issues = "https://github.com/aulme/polydep/issues"
 
 [project.scripts]
 polydep = "polydep.cli:main"

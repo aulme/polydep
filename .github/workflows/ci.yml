@@ -30,3 +30,29 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run ty check src/ tests/
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [test, lint, typecheck]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine next version
+        id: version
+        run: |
+          latest=$(git tag -l 'v0.1.*' | sort -V | tail -n1)
+          if [ -z "$latest" ]; then
+            next="v0.1.0"
+          else
+            patch=${latest##v0.1.}
+            next="v0.1.$((patch + 1))"
+          fi
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+      - name: Create release
+        run: gh release create "${{ steps.version.outputs.tag }}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
