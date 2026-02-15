@@ -37,6 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,13 +48,20 @@ jobs:
         run: |
           latest=$(git tag -l 'v0.1.*' | sort -V | tail -n1)
           if [ -z "$latest" ]; then
-            next="v0.1.0"
+            next="0.1.0"
           else
             patch=${latest##v0.1.}
-            next="v0.1.$((patch + 1))"
+            next="0.1.$((patch + 1))"
           fi
-          echo "tag=$next" >> "$GITHUB_OUTPUT"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
       - name: Create release
-        run: gh release create "${{ steps.version.outputs.tag }}" --generate-notes
+        run: gh release create "v${{ steps.version.outputs.version }}" --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: release
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: ${{ needs.release.outputs.version }}
