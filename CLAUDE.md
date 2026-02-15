@@ -49,20 +49,24 @@ All code must pass pytest, ruff check, ruff format --check, and ty check before 
 
 ```
 src/polydep/
-  cli.py             # Click CLI entry point
-  workspace.py       # Config parsing, brick enumeration, file scanning with imports
-  import_parser.py   # AST-based import extraction (pure function)
-  graph.py           # Dependency graph construction from Workspace
-  mermaid.py         # Mermaid diagram generation
-  models.py          # All data types: BrickType, Import, SourceFile, Brick, Workspace, Edge, DependencyGraph
+  cli.py               # Click CLI entry point (graph, why, check commands)
+  workspace.py         # Config parsing, brick enumeration, file scanning with imports
+  import_parser.py     # AST-based import extraction (pure function)
+  graph.py             # Dependency graph construction from Workspace
+  generate_mermaid.py  # Mermaid diagram generation
+  parse_mermaid.py     # Mermaid diagram parsing (regex-based edge extraction)
+  paths.py             # Path finding between bricks (DFS)
+  models.py            # All data types: BrickType, Import, ImportLocation, SourceFile, Brick, Workspace, Edge, DependencyGraph
 tests/
-  conftest.py        # Shared fixtures (sample_project)
-  test_cli.py        # CLI integration tests via CliRunner
-  test_workspace.py  # Workspace parsing tests
-  test_import_parser.py  # Import extraction tests
-  test_graph.py      # Graph construction tests
-  test_mermaid.py    # Mermaid generation tests
-sample_project/      # Polylith workspace fixture with 10 bricks under namespace "example"
+  conftest.py              # Shared fixtures (sample_project)
+  test_cli.py              # CLI integration tests via CliRunner
+  test_workspace.py        # Workspace parsing tests
+  test_import_parser.py    # Import extraction tests
+  test_graph.py            # Graph construction tests
+  test_generate_mermaid.py # Mermaid generation tests
+  test_parse_mermaid.py    # Mermaid parsing tests
+  test_paths.py            # Path finding tests
+sample_project/            # Polylith workspace fixture with 10 bricks under namespace "example"
 ```
 
 ## Key design decisions
@@ -80,32 +84,24 @@ sample_project/      # Polylith workspace fixture with 10 bricks under namespace
   - `"brick 'foo' not found. Available bricks: greeting, database, schema, log"`
 - Files with syntax errors return empty imports (don't crash)
 
-## Planned features
+## Command behavior
 
-### `why` command
+### `graph`
+Generates a Mermaid diagram with subgraph grouping by brick type (bases vs components). `--save` writes to `polydep.expected.mermaid`.
 
-Find all paths from source to target brick using BFS/DFS with cycle detection. For each path, show the import provenance (file + line number) for every edge. Exit 0 whether path is found or not.
+### `why`
+Finds all paths from source to target brick using DFS with cycle detection. Each edge in a path carries import provenance (file, line, statement). Paths are sorted by length (direct first). Exit 0 whether path is found or not.
 
-### `check` command
+### `check`
+Compares actual dependency graph against an expected Mermaid file. Reports unexpected edges (with file/line provenance) and missing edges. Exit codes: 0 = match, 1 = mismatch, 2 = error.
 
-Compare actual dependency graph against an expected Mermaid file. Report three categories of failure:
-- **Unexpected edges** — boundary violations (actual edges not in expected graph)
-- **Missing edges** — stale graph (expected edges not in actual graph)
-- **Unknown bricks** — bricks in workspace but not mentioned in expected graph
-
-For each unexpected edge, list the specific files and line numbers causing the violation.
-
-Exit codes: 0 = match, 1 = mismatch, 2 = error.
-
-### Mermaid parsing (for `check`)
-
-Parse only the subset relevant to dependency graphs:
-- Edge declarations: `A --> B`, `A --- B`, `A ==> B`, `A -.-> B` (all treated as edges)
-- `graph <direction>` or `flowchart <direction>` header
-- Node declarations with labels: `A[Label]`, `A(Label)`, `A{Label}` — extract the ID before brackets
-- Link text: `A -->|text| B` — extract A and B, ignore text
-- Subgraph blocks, comments (`%%`)
-- Ignore: styling (`style`, `classDef`, `class`), click handlers
+### Mermaid parsing
+Regex-based parser that extracts edges from Mermaid syntax. Handles:
+- Edge declarations: `A --> B`, `A --- B`, `A ==> B`, `A -.-> B`
+- Node labels: `A[Label]`, `A(Label)`, `A{Label}`
+- Link text: `A -->|text| B`
+- Subgraphs, comments (`%%`), `graph`/`flowchart` headers
+- Ignores: `style`, `classDef`, `class` lines
 
 ## Non-goals
 
