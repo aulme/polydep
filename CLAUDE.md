@@ -16,6 +16,14 @@ polydep is a CLI tool that analyzes Python Polylith workspaces to produce depend
 | **Direct dependency** | Brick A imports brick B |
 | **Transitive dependency** | Brick A depends on B through one or more intermediate bricks |
 
+## Setup
+
+```bash
+git clone https://github.com/aulme/polydep.git
+cd polydep
+uv sync
+```
+
 ## Commands
 
 ```bash
@@ -102,6 +110,26 @@ Regex-based parser that extracts edges from Mermaid syntax. Handles:
 - Link text: `A -->|text| B`
 - Subgraphs, comments (`%%`), `graph`/`flowchart` headers
 - Ignores: `style`, `classDef`, `class` lines
+
+## CI/CD
+
+GitHub Actions runs on every push and PR:
+
+- **test** — `pytest`
+- **lint** — `ruff check` + `ruff format --check`
+- **typecheck** — `ty check`
+
+On main, after all checks pass, a release is auto-created with an incremented `0.1.x` patch version and published to PyPI via trusted publisher (OIDC).
+
+## Dependencies
+
+| Dependency | Purpose |
+|------------|---------|
+| `click` | CLI framework (only runtime dependency) |
+| `ast` (stdlib) | Import extraction |
+| `tomllib` (stdlib) | Config parsing |
+
+Dev tools: `uv`, `pytest`, `ruff`, `ty`
 
 ## Non-goals
 
