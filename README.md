@@ -25,8 +25,8 @@ polydep graph
 # Specify a workspace root
 polydep graph --root /path/to/workspace
 
-# Save to file
-polydep graph > deps.mermaid
+# Save to polydep.expected.mermaid
+polydep graph --save
 ```
 
 Example output:
