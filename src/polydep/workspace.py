@@ -28,7 +28,7 @@ def _read_namespace(root: Path) -> str:
 def _scan_files(root: Path, brick_path: Path, namespace: str) -> list[SourceFile]:
     return [
         SourceFile(
-            path=str(py_file.relative_to(root)),
+            path=py_file.relative_to(root).as_posix(),
             imports=extract_imports_from_source(py_file.read_text(encoding="utf-8"), namespace),
         )
         for py_file in brick_path.rglob("*.py")
@@ -48,7 +48,7 @@ def _scan_bricks(
         Brick(
             name=child.name,
             type=brick_type,
-            path=str(child.relative_to(root)),
+            path=child.relative_to(root).as_posix(),
             files=_scan_files(root, child, namespace),
         )
         for child in parent.iterdir()
