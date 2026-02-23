@@ -29,7 +29,7 @@ def _scan_files(root: Path, brick_path: Path, namespace: str) -> list[SourceFile
     return [
         SourceFile(
             path=str(py_file.relative_to(root)),
-            imports=extract_imports_from_source(py_file.read_text(), namespace),
+            imports=extract_imports_from_source(py_file.read_text(encoding="utf-8"), namespace),
         )
         for py_file in brick_path.rglob("*.py")
     ]

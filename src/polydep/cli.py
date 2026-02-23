@@ -27,7 +27,7 @@ def graph(root: Path, save: bool) -> None:
     dependency_graph = build_dependency_graph(workspace)
     output = generate_mermaid(dependency_graph)
     if save:
-        Path("polydep.expected.mermaid").write_text(output)
+        Path("polydep.expected.mermaid").write_text(output, encoding="utf-8")
     else:
         click.echo(output, nl=False)
 
@@ -105,7 +105,7 @@ def check(expected: Path, root: Path) -> None:
 
     dependency_graph = build_dependency_graph(workspace)
     actual_edges = {(edge.source, edge.target): edge for edge in dependency_graph.edges}
-    expected_edges = parse_mermaid(expected.read_text())
+    expected_edges = parse_mermaid(expected.read_text(encoding="utf-8"))
 
     unexpected = sorted(actual_edges.keys() - expected_edges)
     missing = sorted(expected_edges - actual_edges.keys())
