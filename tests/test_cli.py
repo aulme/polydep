@@ -319,11 +319,11 @@ def test_project_command_no_projects_dir(tmp_path: Path) -> None:
 
 
 def test_view_command_opens_mermaid_file(tmp_path: Path) -> None:
-    mermaid_file = tmp_path / "test.mermaid"
-    mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
     runner = CliRunner()
 
-    with patch("webbrowser.open") as mock_open:
+    with patch("webbrowser.open") as mock_open, runner.isolated_filesystem(temp_dir=tmp_path) as td:
+        mermaid_file = Path(td) / "test.mermaid"
+        mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
         result = runner.invoke(main, ["view", str(mermaid_file)])
 
     assert result.exit_code == 0
@@ -331,6 +331,36 @@ def test_view_command_opens_mermaid_file(tmp_path: Path) -> None:
     url = mock_open.call_args[0][0]
     assert url.startswith("file://")
     assert url.endswith(".html")
+
+
+def test_view_command_uses_namespace_as_title(sample_project: Path, tmp_path: Path) -> None:
+    mermaid_file = tmp_path / "polydep.expected.mermaid"
+    mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open:
+        result = runner.invoke(main, ["view", str(mermaid_file), "--root", str(sample_project)])
+
+    assert result.exit_code == 0
+    html_path = Path(mock_open.call_args[0][0].removeprefix("file://"))
+    html = html_path.read_text(encoding="utf-8")
+    assert "<title>example</title>" in html
+    assert "<h1>example</h1>" in html
+
+
+def test_view_command_falls_back_to_stem_without_workspace(tmp_path: Path) -> None:
+    mermaid_file = tmp_path / "polydep.expected.mermaid"
+    mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open, runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(main, ["view", str(mermaid_file)])
+
+    assert result.exit_code == 0
+    html_path = Path(mock_open.call_args[0][0].removeprefix("file://"))
+    html = html_path.read_text(encoding="utf-8")
+    assert "<title>polydep.expected</title>" in html
+    assert "<h1>polydep.expected</h1>" in html
 
 
 def test_view_command_default_file(tmp_path: Path) -> None:

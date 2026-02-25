@@ -606,11 +606,11 @@ def view_graph(dep_graph: DependencyGraph) -> None:
     _open_in_browser(html)
 
 
-def view_file(path: Path) -> None:
+def view_file(path: Path, title: str | None = None) -> None:
     """Open a Mermaid .mermaid file in the fishtail browser viewer."""
     text = path.read_text(encoding="utf-8")
     node_subgraph, edges_set = parse_mermaid_with_subgraphs(text)
     edges = list(edges_set)
     data = _build_view_data(node_subgraph, edges)
-    html = _generate_html(data, path.stem)
+    html = _generate_html(data, title if title is not None else path.stem)
     _open_in_browser(html)
