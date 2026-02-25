@@ -4,7 +4,7 @@ Dependency graph and boundary enforcement for Python Polylith workspaces.
 
 `polydep` analyzes inter-brick imports in a [Python Polylith](https://github.com/DavidVujic/python-polylith) monorepo and outputs a Mermaid dependency graph. It complements the `poly` CLI by adding graph visualization, dependency chain explanation, and CI-friendly boundary checks.
 
-Read-only — never modifies workspace files.
+Mostly read-only — `polydep project --fix` can rewrite `[tool.polylith.bricks]` sections.
 
 ## Install
 
@@ -101,6 +101,52 @@ Path 2 (transitive, length 2):
     components/example/kafka/producer.py:3  from example import log
 ```
 
+### `polydep project`
+
+Check that each project's `pyproject.toml` declares exactly the bricks it needs — no missing, no stale extras. Computes the full transitive closure from the project's base bricks.
+
+```bash
+polydep project [<project_path>] [--fix] [--root <path>]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `<project_path>` | | Single project directory to check (omit to scan all `projects/*/`) |
+| `--fix` | | Rewrite `[tool.polylith.bricks]` with the correct set |
+| `--root <path>` | `.` | Workspace root directory |
+
+Example output (issues found):
+
+```
+consumer_app: 2 issue(s)
+  Missing (needed but not declared):
+    log
+  Extra (declared but not needed):
+    greeting
+messaging: OK
+```
+
+The `--fix` flag rewrites the bricks section in place, grouping entries into `# direct` (base bricks and their immediate imports) and `# transitive` (everything else), with `# via` annotations showing which bricks pull each transitive one in:
+
+```toml
+[tool.polylith.bricks]
+# direct
+"../../bases/example/message_api" = "example/message_api"
+"../../components/example/database" = "example/database"
+"../../components/example/log" = "example/log"
+"../../components/example/message" = "example/message"
+"../../components/example/schema" = "example/schema"
+
+# transitive
+"../../components/example/dictionaries" = "example/dictionaries"  # via message
+"../../components/example/kafka" = "example/kafka"  # via message
+```
+
+| Exit code | Meaning |
+|-----------|---------|
+| 0 | All projects OK (or `--fix` applied) |
+| 1 | Issues found (without `--fix`) |
+
 ### `polydep check`
 
 Compare actual dependencies against an expected graph file. Designed for CI — exits non-zero on mismatch.
@@ -187,7 +233,7 @@ git add polydep.expected.mermaid && git commit -m "Add expected dependency graph
 | Dependency graph (Mermaid) | -- | `polydep graph` |
 | Dependency explanation | -- | `polydep why` |
 | Boundary enforcement | -- | `polydep check` |
-| Missing deps in project | `poly check` | -- |
+| Missing/extra deps in project | `poly check` | `polydep project` |
 | Library analysis | `poly libs` | -- |
 
 `polydep` complements rather than replaces `poly`. It focuses on the inter-brick dependency graph.

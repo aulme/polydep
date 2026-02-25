@@ -2,7 +2,7 @@
 
 ## Project overview
 
-polydep is a CLI tool that analyzes Python Polylith workspaces to produce dependency graphs, explain dependency chains, and enforce architectural boundaries between bricks.
+polydep is a CLI tool that analyzes Python Polylith workspaces to produce dependency graphs, explain dependency chains, enforce architectural boundaries between bricks, and verify project brick declarations.
 
 ## Terminology
 
@@ -33,6 +33,7 @@ uv run ruff format --check .           # Check formatting
 uv run ruff format .                   # Auto-format
 uv run ty check src/ tests/            # Type check
 uv run polydep graph --root sample_project  # Smoke test
+uv run polydep project --root sample_project  # Smoke test project command
 ```
 
 All code must pass pytest, ruff check, ruff format --check, and ty check before committing.
@@ -57,24 +58,33 @@ All code must pass pytest, ruff check, ruff format --check, and ty check before 
 
 ```
 src/polydep/
-  cli.py               # Click CLI entry point (graph, why, check commands)
-  workspace.py         # Config parsing, brick enumeration, file scanning with imports
-  import_parser.py     # AST-based import extraction (pure function)
-  graph.py             # Dependency graph construction from Workspace
-  generate_mermaid.py  # Mermaid diagram generation
-  parse_mermaid.py     # Mermaid diagram parsing (regex-based edge extraction)
-  paths.py             # Path finding between bricks (DFS)
-  models.py            # All data types: BrickType, Import, ImportLocation, SourceFile, Brick, Workspace, Edge, DependencyGraph
+  cli.py                  # Click CLI entry point (graph, why, check, project commands)
+  workspace.py            # Config parsing, brick enumeration, file scanning with imports
+  import_parser.py        # AST-based import extraction (pure function)
+  graph.py                # Dependency graph construction from Workspace
+  generate_mermaid.py     # Mermaid diagram generation
+  parse_mermaid.py        # Mermaid diagram parsing (regex-based edge extraction)
+  paths.py                # Path finding between bricks (DFS)
+  project_workspace.py    # Project discovery and pyproject.toml parsing
+  project_checker.py      # Transitive closure check: missing/extra brick detection
+  project_fixer.py        # Rewrites [tool.polylith.bricks] with direct/transitive annotations
+  models.py               # All data types: BrickType, Import, ImportLocation, SourceFile, Brick, Workspace, Edge, DependencyGraph, Project, ProjectIssues
 tests/
-  conftest.py              # Shared fixtures (sample_project)
-  test_cli.py              # CLI integration tests via CliRunner
-  test_workspace.py        # Workspace parsing tests
-  test_import_parser.py    # Import extraction tests
-  test_graph.py            # Graph construction tests
-  test_generate_mermaid.py # Mermaid generation tests
-  test_parse_mermaid.py    # Mermaid parsing tests
-  test_paths.py            # Path finding tests
-sample_project/            # Polylith workspace fixture with 10 bricks under namespace "example"
+  conftest.py                  # Shared fixtures (sample_project)
+  test_cli.py                  # CLI integration tests via CliRunner
+  test_workspace.py            # Workspace parsing tests
+  test_import_parser.py        # Import extraction tests
+  test_graph.py                # Graph construction tests
+  test_generate_mermaid.py     # Mermaid generation tests
+  test_parse_mermaid.py        # Mermaid parsing tests
+  test_paths.py                # Path finding tests
+  test_project_workspace.py    # Project discovery and parsing tests
+  test_project_checker.py      # Transitive closure / issue detection tests
+  test_project_fixer.py        # Fixed section generation and apply_fix tests
+sample_project/                # Polylith workspace fixture with 10 bricks under namespace "example"
+  projects/
+    consumer_app/              # Intentionally broken: missing log, extra greeting
+    messaging/                 # Correctly declared
 ```
 
 ## Key design decisions
@@ -102,6 +112,9 @@ Finds all paths from source to target brick using DFS with cycle detection. Each
 
 ### `check`
 Compares actual dependency graph against an expected Mermaid file (default: `polydep.expected.mermaid`). Reports unexpected edges (with file/line provenance) and missing edges. Exit codes: 0 = match, 1 = mismatch, 2 = error.
+
+### `project`
+Checks that each project's `[tool.polylith.bricks]` declares exactly the bricks reachable from its base bricks via transitive closure. Reports missing bricks (needed but not declared) and extra bricks (declared but not needed). `--fix` rewrites the section in place, splitting entries into `# direct` (bases + their 1-hop neighbours) and `# transitive` (rest of closure) blocks, with `# via <importers>` annotations on transitive entries. Exit codes: 0 = all OK or fix applied, 1 = issues found.
 
 ### Mermaid parsing
 Regex-based parser that extracts edges from Mermaid syntax. Handles:
@@ -133,7 +146,7 @@ Dev tools: `uv`, `pytest`, `ruff`, `ty`
 
 ## Non-goals
 
-- Modifying workspace files (read-only tool)
+- Modifying workspace files (read-only, except `polydep project --fix` which rewrites `pyproject.toml` bricks sections)
 - Replacing existing `poly` CLI functionality
 - Analyzing third-party library dependencies
 - Supporting non-Python polylith implementations
