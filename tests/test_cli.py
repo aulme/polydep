@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -225,3 +226,89 @@ def test_check_command_default_file_not_found(tmp_path: Path) -> None:
     assert result.exit_code == 1
     assert "polydep.expected.mermaid" in result.output
     assert "not found" in result.output
+
+
+def test_project_command_all_projects(sample_project: Path) -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["project", "--root", str(sample_project)])
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "consumer_app: 2 issue(s)\n"
+        "  Missing (needed but not declared):\n"
+        "    log\n"
+        "  Extra (declared but not needed):\n"
+        "    greeting\n"
+        "messaging: OK\n"
+    )
+
+
+def test_project_command_single_project_with_issues(sample_project: Path) -> None:
+    runner = CliRunner()
+    consumer_app = sample_project / "projects" / "consumer_app"
+
+    result = runner.invoke(main, ["project", str(consumer_app), "--root", str(sample_project)])
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "consumer_app: 2 issue(s)\n"
+        "  Missing (needed but not declared):\n"
+        "    log\n"
+        "  Extra (declared but not needed):\n"
+        "    greeting\n"
+    )
+
+
+def test_project_command_single_project_ok(sample_project: Path) -> None:
+    runner = CliRunner()
+    messaging = sample_project / "projects" / "messaging"
+
+    result = runner.invoke(main, ["project", str(messaging), "--root", str(sample_project)])
+
+    assert result.exit_code == 0
+    assert result.output == "messaging: OK\n"
+
+
+def test_project_command_fix(sample_project: Path, tmp_path: Path) -> None:
+    # Copy sample_project to a temp location so we can modify it safely
+    workspace_copy = tmp_path / "workspace"
+    shutil.copytree(sample_project, workspace_copy)
+    consumer_app = workspace_copy / "projects" / "consumer_app"
+    runner = CliRunner()
+
+    result = runner.invoke(
+        main,
+        ["project", str(consumer_app), "--fix", "--root", str(workspace_copy)],
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "consumer_app: fixed\n"
+
+    updated = (consumer_app / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"../../components/example/log" = "example/log"' in updated
+    assert '"../../components/example/greeting"' not in updated
+
+
+def test_project_command_fix_all_projects(sample_project: Path, tmp_path: Path) -> None:
+    workspace_copy = tmp_path / "workspace"
+    shutil.copytree(sample_project, workspace_copy)
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["project", "--fix", "--root", str(workspace_copy)])
+
+    assert result.exit_code == 0
+    assert result.output == "consumer_app: fixed\nmessaging: OK (no changes)\n"
+
+
+def test_project_command_no_projects_dir(tmp_path: Path) -> None:
+    # Create a minimal workspace with no projects/ dir
+    (tmp_path / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["project", "--root", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert result.output == "No projects found.\n"

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling", "hatch-polylith-bricks"]
+build-backend = "hatchling.build"
+
+[project]
+name = "messaging"
+requires-python = ">=3.11"
+
+[tool.hatch.build.hooks.polylith-bricks]
+
+[tool.polylith.bricks]
+"../../bases/example/message_api" = "example/message_api"
+"../../components/example/database" = "example/database"
+"../../components/example/dictionaries" = "example/dictionaries"
+"../../components/example/kafka" = "example/kafka"
+"../../components/example/log" = "example/log"
+"../../components/example/message" = "example/message"
+"../../components/example/schema" = "example/schema"

@@ -55,3 +55,18 @@ class DependencyGraph:
     namespace: str
     bricks: list[Brick]
     edges: list[Edge] = field(default_factory=list)
+
+
+@dataclass
+class Project:
+    name: str
+    root: Path
+    pyproject_path: Path
+    declared_bricks: set[str]  # brick names only (not paths)
+
+
+@dataclass
+class ProjectIssues:
+    project: Project
+    missing: list[str]  # sorted brick names needed but not declared
+    extra: list[str]  # sorted brick names declared but not needed by transitive closure
