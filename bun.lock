@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "devDependencies": {
+        "fishtail": "*",
+      },
+    },
+  },
+  "packages": {
+    "commander": ["commander@13.1.0", "", {}, "sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw=="],
+
+    "fishtail": ["fishtail@0.2.5", "", { "dependencies": { "commander": "^13.1.0" }, "bin": { "fishtail": "dist/cli.js" } }, "sha512-pZEvzzlA6HLt7Vn7YlzT4br18p6jagqxlzUQu7NzQQRsxvDRSl1sZMEDJ97R5zu74+3cUF9lEFa2+Pc0qray/A=="],
+  }
+}

@@ -24,6 +24,16 @@ cd polydep
 uv sync
 ```
 
+## Updating the viewer bundle
+
+`src/polydep/static/viewer.bundle.js` is copied from the `fishtail` npm package and committed. To update it after a new fishtail release:
+
+```bash
+bun run update-viewer
+```
+
+This runs `bun install` (updating `fishtail` to the latest version) then copies `dist/viewer.bundle.js` from the npm package into `src/polydep/static/`. Commit the updated `viewer.bundle.js` and `bun.lockb` together.
+
 ## Commands
 
 ```bash

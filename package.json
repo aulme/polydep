@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "fishtail": "*"
+  },
+  "scripts": {
+    "update-viewer": "bun install && bun scripts/update-viewer.js"
+  }
+}
