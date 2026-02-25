@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
@@ -312,3 +313,69 @@ def test_project_command_no_projects_dir(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert result.output == "No projects found.\n"
+
+
+# --- view command tests ---
+
+
+def test_view_command_opens_mermaid_file(tmp_path: Path) -> None:
+    mermaid_file = tmp_path / "test.mermaid"
+    mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open:
+        result = runner.invoke(main, ["view", str(mermaid_file)])
+
+    assert result.exit_code == 0
+    mock_open.assert_called_once()
+    url = mock_open.call_args[0][0]
+    assert url.startswith("file://")
+    assert url.endswith(".html")
+
+
+def test_view_command_default_file(tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open, runner.isolated_filesystem(temp_dir=tmp_path) as td:
+        Path(td, "polydep.expected.mermaid").write_text("graph LR\n  a --> b\n", encoding="utf-8")
+        result = runner.invoke(main, ["view"])
+
+    assert result.exit_code == 0
+    mock_open.assert_called_once()
+
+
+def test_view_command_missing_file_errors(tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(main, ["view"])
+
+    assert result.exit_code == 1
+    assert "not found" in result.output
+
+
+# --- graph --view flag tests ---
+
+
+def test_graph_view_flag(sample_project: Path) -> None:
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open:
+        result = runner.invoke(main, ["graph", "--root", str(sample_project), "--view"])
+
+    assert result.exit_code == 0
+    assert result.output == ""
+    mock_open.assert_called_once()
+
+
+def test_graph_view_and_save_together(sample_project: Path, tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    with patch("webbrowser.open") as mock_open, runner.isolated_filesystem(temp_dir=tmp_path) as td:
+        result = runner.invoke(main, ["graph", "--root", str(sample_project), "--view", "--save"])
+        saved = Path(td, "polydep.expected.mermaid").read_text()
+
+    assert result.exit_code == 0
+    assert result.output == ""
+    mock_open.assert_called_once()
+    assert saved.startswith("graph LR\n")

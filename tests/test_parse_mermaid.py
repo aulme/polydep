@@ -2,7 +2,7 @@ from pathlib import Path
 
 from polydep.generate_mermaid import generate_mermaid
 from polydep.graph import build_dependency_graph
-from polydep.parse_mermaid import parse_mermaid
+from polydep.parse_mermaid import parse_mermaid, parse_mermaid_with_subgraphs
 from polydep.workspace import parse_workspace
 
 # --- Unit tests ---
@@ -77,6 +77,52 @@ def test_parse_mermaid_ignores_styling() -> None:
     edges = parse_mermaid(content)
 
     assert edges == {("a", "b")}
+
+
+# --- parse_mermaid_with_subgraphs tests ---
+
+
+def test_parse_mermaid_with_subgraphs_extracts_membership() -> None:
+    content = (
+        "graph LR\n"
+        "  subgraph bases\n"
+        "    api\n"
+        "    consumer\n"
+        "  end\n"
+        "  subgraph components\n"
+        "    log\n"
+        "  end\n"
+        "  api --> log\n"
+    )
+
+    node_subgraph, _ = parse_mermaid_with_subgraphs(content)
+
+    assert node_subgraph == {"api": "bases", "consumer": "bases", "log": "components"}
+
+
+def test_parse_mermaid_with_subgraphs_extracts_edges() -> None:
+    content = "graph LR\n  subgraph bases\n    api\n  end\n  api --> log\n  log --> db\n"
+
+    _, edges = parse_mermaid_with_subgraphs(content)
+
+    assert edges == {("api", "log"), ("log", "db")}
+
+
+def test_parse_mermaid_with_subgraphs_round_trip(sample_project: Path) -> None:
+    workspace = parse_workspace(sample_project)
+    graph = build_dependency_graph(workspace)
+    mermaid = generate_mermaid(graph)
+
+    node_subgraph, edges = parse_mermaid_with_subgraphs(mermaid)
+
+    expected_edges = {(e.source, e.target) for e in graph.edges}
+    assert edges == expected_edges
+
+    from polydep.models import BrickType
+
+    for brick in graph.bricks:
+        expected_sg = "bases" if brick.type == BrickType.BASE else "components"
+        assert node_subgraph[brick.name] == expected_sg
 
 
 # --- Integration test ---

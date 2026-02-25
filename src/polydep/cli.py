@@ -21,7 +21,8 @@ def main() -> None:
 @main.command()
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
 @click.option("--save", is_flag=True, help="Save to polydep.expected.mermaid instead of printing.")
-def graph(root: Path, save: bool) -> None:
+@click.option("--view", "open_viewer", is_flag=True, help="Open in the fishtail viewer.")
+def graph(root: Path, save: bool, open_viewer: bool) -> None:
     """Print the dependency graph as a Mermaid diagram."""
     try:
         workspace = parse_workspace(root)
@@ -31,7 +32,11 @@ def graph(root: Path, save: bool) -> None:
     output = generate_mermaid(dependency_graph)
     if save:
         Path("polydep.expected.mermaid").write_text(output, encoding="utf-8")
-    else:
+    if open_viewer:
+        from polydep.view import view_graph
+
+        view_graph(dependency_graph)
+    if not save and not open_viewer:
         click.echo(output, nl=False)
 
 
@@ -85,7 +90,19 @@ def why(source: str, target: str, root: Path) -> None:
         click.echo(_format_path(index, path))
 
 
-_DEFAULT_EXPECTED_FILE = "polydep.expected.mermaid"
+_DEFAULT_MERMAID_FILE = "polydep.expected.mermaid"
+_DEFAULT_EXPECTED_FILE = _DEFAULT_MERMAID_FILE
+
+
+@main.command()
+@click.argument("file", type=click.Path(path_type=Path), default=Path(_DEFAULT_MERMAID_FILE))
+def view(file: Path) -> None:
+    """Open a Mermaid diagram in the fishtail viewer."""
+    if not file.exists():
+        raise click.ClickException(f"{file} not found.")
+    from polydep.view import view_file
+
+    view_file(file)
 
 
 @main.command()
