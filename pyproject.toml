@@ -1,6 +1,6 @@
 [project]
 name = "polydep"
-version = "0.1.0"
+version = "0.2.0"
 description = "Dependency graph and boundary enforcement for Python Polylith workspaces."
 readme = "README.md"
 license = "MIT"
