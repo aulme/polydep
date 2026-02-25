@@ -118,7 +118,7 @@ def check(expected: Path, root: Path) -> None:
 
     if unexpected:
         click.echo()
-        click.echo("Unexpected dependencies:")
+        click.echo(f"Unexpected dependencies (in project but not in {expected}):")
         for source, target in unexpected:
             click.echo(f"  {source} --> {target}")
             edge = actual_edges[(source, target)]
@@ -127,7 +127,7 @@ def check(expected: Path, root: Path) -> None:
 
     if missing:
         click.echo()
-        click.echo("Missing dependencies:")
+        click.echo(f"Missing dependencies (in {expected} but not in project):")
         for source, target in missing:
             click.echo(f"  {source} --> {target}")
 

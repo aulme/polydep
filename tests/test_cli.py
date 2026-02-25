@@ -165,7 +165,7 @@ def test_check_command_detects_unexpected_edges(sample_project: Path, tmp_path: 
     assert result.output == (
         "Check failed.\n"
         "\n"
-        "Unexpected dependencies:\n"
+        f"Unexpected dependencies (in project but not in {expected_file}):\n"
         "  consumer --> kafka\n"
         "    bases/example/consumer/core.py:3  from example import kafka, log\n"
     )
@@ -183,7 +183,12 @@ def test_check_command_detects_missing_edges(sample_project: Path, tmp_path: Pat
     )
 
     assert result.exit_code == 1
-    assert result.output == ("Check failed.\n\nMissing dependencies:\n  greeting --> database\n")
+    assert result.output == (
+        "Check failed.\n"
+        "\n"
+        f"Missing dependencies (in {expected_file} but not in project):\n"
+        "  greeting --> database\n"
+    )
 
 
 def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> None:
@@ -202,11 +207,11 @@ def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> Non
     assert result.output == (
         "Check failed.\n"
         "\n"
-        "Unexpected dependencies:\n"
+        f"Unexpected dependencies (in project but not in {expected_file}):\n"
         "  consumer --> kafka\n"
         "    bases/example/consumer/core.py:3  from example import kafka, log\n"
         "\n"
-        "Missing dependencies:\n"
+        f"Missing dependencies (in {expected_file} but not in project):\n"
         "  greeting --> database\n"
     )
 
