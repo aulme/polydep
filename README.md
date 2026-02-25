@@ -19,6 +19,9 @@ Requires Python 3.11+.
 ## Quick start
 
 ```bash
+# Open the dependency graph in an interactive browser viewer
+polydep graph --view
+
 # Generate a dependency graph as Mermaid
 polydep graph
 
@@ -69,13 +72,30 @@ graph LR
 Print the dependency graph as a Mermaid diagram to stdout.
 
 ```bash
-polydep graph [--root <path>] [--save]
+polydep graph [--root <path>] [--save] [--view]
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--root <path>` | `.` | Workspace root directory |
 | `--save` | | Write to `polydep.expected.mermaid` instead of printing |
+| `--view` | | Open the graph in an interactive browser viewer |
+
+`--view` and `--save` can be combined: saves the Mermaid file and opens the viewer.
+
+### `polydep view`
+
+Open a saved Mermaid diagram in the interactive browser viewer.
+
+```bash
+polydep view [<file>]
+```
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `<file>` | `polydep.expected.mermaid` | Path to a `.mermaid` file |
+
+The viewer renders an interactive graph with transitive node highlighting, search, cycle detection, and connected-component grouping.
 
 ### `polydep why`
 
@@ -231,6 +251,7 @@ git add polydep.expected.mermaid && git commit -m "Add expected dependency graph
 |---------|-----------|-----------|
 | Dependency table | `poly deps` | -- |
 | Dependency graph (Mermaid) | -- | `polydep graph` |
+| Interactive graph viewer | -- | `polydep graph --view`, `polydep view` |
 | Dependency explanation | -- | `polydep why` |
 | Boundary enforcement | -- | `polydep check` |
 | Missing/extra deps in project | `poly check` | `polydep project` |

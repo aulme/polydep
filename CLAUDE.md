@@ -44,6 +44,7 @@ uv run ruff format .                   # Auto-format
 uv run ty check src/ tests/            # Type check
 uv run polydep graph --root sample_project  # Smoke test
 uv run polydep project --root sample_project  # Smoke test project command
+uv run polydep graph --root sample_project --view  # Smoke test viewer
 ```
 
 All code must pass pytest, ruff check, ruff format --check, and ty check before committing.
@@ -68,7 +69,7 @@ All code must pass pytest, ruff check, ruff format --check, and ty check before 
 
 ```
 src/polydep/
-  cli.py                  # Click CLI entry point (graph, why, check, project commands)
+  cli.py                  # Click CLI entry point (graph, why, check, project, view commands)
   workspace.py            # Config parsing, brick enumeration, file scanning with imports
   import_parser.py        # AST-based import extraction (pure function)
   graph.py                # Dependency graph construction from Workspace
@@ -79,6 +80,9 @@ src/polydep/
   project_checker.py      # Transitive closure check: missing/extra brick detection
   project_fixer.py        # Rewrites [tool.polylith.bricks] with direct/transitive annotations
   models.py               # All data types: BrickType, Import, ImportLocation, SourceFile, Brick, Workspace, Edge, DependencyGraph, Project, ProjectIssues
+  view.py                 # Browser viewer: HTML generation, cycle/group detection, webbrowser.open
+  static/
+    viewer.bundle.js      # Copied from fishtail npm package (see "Updating the viewer bundle")
 tests/
   conftest.py                  # Shared fixtures (sample_project)
   test_cli.py                  # CLI integration tests via CliRunner
@@ -115,7 +119,10 @@ sample_project/                # Polylith workspace fixture with 10 bricks under
 ## Command behavior
 
 ### `graph`
-Generates a Mermaid diagram with subgraph grouping by brick type (bases vs components). `--save` writes to `polydep.expected.mermaid`.
+Generates a Mermaid diagram with subgraph grouping by brick type (bases vs components). `--save` writes to `polydep.expected.mermaid`. `--view` opens the graph in the browser viewer (can be combined with `--save`). Without either flag, prints to stdout.
+
+### `view`
+Opens a `.mermaid` file in the browser viewer. Defaults to `polydep.expected.mermaid`. Parses subgraph membership and edges from the file, generates a self-contained HTML page with the inlined viewer bundle, writes it to a temp file, and calls `webbrowser.open`.
 
 ### `why`
 Finds all paths from source to target brick using DFS with cycle detection. Each edge in a path carries import provenance (file, line, statement). Paths are sorted by length (direct first). Exit 0 whether path is found or not.
