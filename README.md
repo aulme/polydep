@@ -95,7 +95,7 @@ polydep view [<file>]
 |----------|---------|-------------|
 | `<file>` | `polydep.expected.mermaid` | Path to a `.mermaid` file |
 
-The viewer renders an interactive graph with transitive node highlighting, search, cycle detection, and connected-component grouping.
+The viewer renders an interactive graph with transitive node highlighting, search, cycle detection, and connected-component grouping. The tab title and sidebar logo show the workspace namespace (e.g. `myapp`) — inferred from the `workspace.toml` in the same directory as the file.
 
 ### `polydep why`
 

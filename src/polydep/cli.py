@@ -96,15 +96,14 @@ _DEFAULT_EXPECTED_FILE = _DEFAULT_MERMAID_FILE
 
 @main.command()
 @click.argument("file", type=click.Path(path_type=Path), default=Path(_DEFAULT_MERMAID_FILE))
-@click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
-def view(file: Path, root: Path) -> None:
+def view(file: Path) -> None:
     """Open a Mermaid diagram in the fishtail viewer."""
     if not file.exists():
         raise click.ClickException(f"{file} not found.")
     from polydep.view import view_file
 
     try:
-        workspace = parse_workspace(root)
+        workspace = parse_workspace(file.parent)
         title = workspace.namespace
     except (FileNotFoundError, KeyError):
         title = file.stem

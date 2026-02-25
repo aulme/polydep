@@ -122,7 +122,7 @@ sample_project/                # Polylith workspace fixture with 10 bricks under
 Generates a Mermaid diagram with subgraph grouping by brick type (bases vs components). `--save` writes to `polydep.expected.mermaid`. `--view` opens the graph in the browser viewer (can be combined with `--save`). Without either flag, prints to stdout.
 
 ### `view`
-Opens a `.mermaid` file in the browser viewer. Defaults to `polydep.expected.mermaid`. Parses subgraph membership and edges from the file, generates a self-contained HTML page with the inlined viewer bundle, writes it to a temp file, and calls `webbrowser.open`.
+Opens a `.mermaid` file in the browser viewer. Defaults to `polydep.expected.mermaid`. Infers the workspace from the file's parent directory; if found, uses the namespace as the HTML page title and sidebar logo (falls back to the file stem if no workspace is found). Parses subgraph membership and edges from the file, generates a self-contained HTML page with the inlined viewer bundle, writes it to a temp file, and calls `webbrowser.open`.
 
 ### `why`
 Finds all paths from source to target brick using DFS with cycle detection. Each edge in a path carries import provenance (file, line, statement). Paths are sorted by length (direct first). Exit 0 whether path is found or not.

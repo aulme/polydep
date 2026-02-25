@@ -333,13 +333,16 @@ def test_view_command_opens_mermaid_file(tmp_path: Path) -> None:
     assert url.endswith(".html")
 
 
-def test_view_command_uses_namespace_as_title(sample_project: Path, tmp_path: Path) -> None:
+def test_view_command_uses_namespace_as_title(tmp_path: Path) -> None:
+    (tmp_path / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
     mermaid_file = tmp_path / "polydep.expected.mermaid"
     mermaid_file.write_text("graph LR\n  a --> b\n", encoding="utf-8")
     runner = CliRunner()
 
     with patch("webbrowser.open") as mock_open:
-        result = runner.invoke(main, ["view", str(mermaid_file), "--root", str(sample_project)])
+        result = runner.invoke(main, ["view", str(mermaid_file)])
 
     assert result.exit_code == 0
     html_path = Path(mock_open.call_args[0][0].removeprefix("file://"))
