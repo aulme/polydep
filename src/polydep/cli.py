@@ -22,10 +22,11 @@ def main() -> None:
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
 @click.option("--save", is_flag=True, help="Save to polydep.expected.mermaid instead of printing.")
 @click.option("--view", "open_viewer", is_flag=True, help="Open in the fishtail viewer.")
-def graph(root: Path, save: bool, open_viewer: bool) -> None:
+@click.option("--no-ignore", is_flag=True, help="Scan all files, ignoring .gitignore rules.")
+def graph(root: Path, save: bool, open_viewer: bool, no_ignore: bool) -> None:
     """Print the dependency graph as a Mermaid diagram."""
     try:
-        workspace = parse_workspace(root)
+        workspace = parse_workspace(root, ignore_gitignored=not no_ignore)
     except FileNotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
     dependency_graph = build_dependency_graph(workspace)
@@ -62,10 +63,11 @@ def _format_path(index: int, path: list[Edge]) -> str:
 @click.argument("source")
 @click.argument("target")
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
-def why(source: str, target: str, root: Path) -> None:
+@click.option("--no-ignore", is_flag=True, help="Scan all files, ignoring .gitignore rules.")
+def why(source: str, target: str, root: Path, no_ignore: bool) -> None:
     """Explain why one brick depends on another."""
     try:
-        workspace = parse_workspace(root)
+        workspace = parse_workspace(root, ignore_gitignored=not no_ignore)
     except FileNotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
 
@@ -118,13 +120,14 @@ def view(file: Path) -> None:
     help=f"Path to expected graph file (default: {_DEFAULT_EXPECTED_FILE}).",
 )
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
-def check(expected: Path, root: Path) -> None:
+@click.option("--no-ignore", is_flag=True, help="Scan all files, ignoring .gitignore rules.")
+def check(expected: Path, root: Path, no_ignore: bool) -> None:
     """Compare actual dependencies against an expected graph file."""
     if not expected.exists():
         raise click.ClickException(f"{expected} not found.")
 
     try:
-        workspace = parse_workspace(root)
+        workspace = parse_workspace(root, ignore_gitignored=not no_ignore)
     except FileNotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
 

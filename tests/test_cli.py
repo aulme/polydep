@@ -412,3 +412,62 @@ def test_graph_view_and_save_together(sample_project: Path, tmp_path: Path) -> N
     assert result.output == ""
     mock_open.assert_called_once()
     assert saved.startswith("graph LR\n")
+
+
+def _make_gitignore_workspace(root: Path) -> None:
+    (root / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
+    real = root / "components" / "example" / "real"
+    real.mkdir(parents=True)
+    (real / "core.py").write_text("")
+    ghost = root / "components" / "example" / "ghost"
+    ghost.mkdir(parents=True)
+    (ghost / "core.py").write_text("")
+    (root / ".gitignore").write_text("ghost/\n")
+
+
+def test_graph_respects_gitignore_by_default(tmp_path: Path) -> None:
+    _make_gitignore_workspace(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["graph", "--root", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "ghost" not in result.output
+    assert "real" in result.output
+
+
+def test_graph_no_ignore_includes_gitignored_bricks(tmp_path: Path) -> None:
+    _make_gitignore_workspace(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["graph", "--no-ignore", "--root", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "ghost" in result.output
+    assert "real" in result.output
+
+
+def test_why_respects_gitignore_by_default(tmp_path: Path) -> None:
+    _make_gitignore_workspace(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(main, ["why", "real", "ghost", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "ghost" in result.output
+    assert "not found" in result.output
+
+
+def test_check_respects_gitignore_by_default(tmp_path: Path) -> None:
+    _make_gitignore_workspace(tmp_path)
+    runner = CliRunner()
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text("graph LR\n")
+
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0

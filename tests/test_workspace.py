@@ -91,3 +91,115 @@ def test_parse_workspace_with_missing_config_raises(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError):
         parse_workspace(tmp_path)
+
+
+def _make_workspace(root: Path) -> None:
+    (root / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
+
+
+def test_gitignored_file_is_excluded(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    brick = tmp_path / "components" / "example" / "mycomp"
+    brick.mkdir(parents=True)
+    (brick / "core.py").write_text("x = 1")
+    (brick / "generated.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("generated.py\n")
+
+    workspace = parse_workspace(tmp_path)
+
+    mycomp = next(b for b in workspace.bricks if b.name == "mycomp")
+    assert {sf.path for sf in mycomp.files} == {"components/example/mycomp/core.py"}
+
+
+def test_gitignored_subdirectory_is_excluded(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    brick = tmp_path / "components" / "example" / "mycomp"
+    brick.mkdir(parents=True)
+    (brick / "core.py").write_text("x = 1")
+    generated = brick / "generated"
+    generated.mkdir()
+    (generated / "code.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("generated/\n")
+
+    workspace = parse_workspace(tmp_path)
+
+    mycomp = next(b for b in workspace.bricks if b.name == "mycomp")
+    assert {sf.path for sf in mycomp.files} == {"components/example/mycomp/core.py"}
+
+
+def test_nested_gitignore_is_respected(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    brick = tmp_path / "components" / "example" / "mycomp"
+    brick.mkdir(parents=True)
+    (brick / "core.py").write_text("x = 1")
+    (brick / "secret.py").write_text("x = 2")
+    (brick / ".gitignore").write_text("secret.py\n")
+
+    workspace = parse_workspace(tmp_path)
+
+    mycomp = next(b for b in workspace.bricks if b.name == "mycomp")
+    assert {sf.path for sf in mycomp.files} == {"components/example/mycomp/core.py"}
+
+
+def test_brick_entirely_gitignored_is_excluded(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    real = tmp_path / "components" / "example" / "real"
+    real.mkdir(parents=True)
+    (real / "core.py").write_text("x = 1")
+    ghost = tmp_path / "components" / "example" / "ghost"
+    ghost.mkdir(parents=True)
+    (ghost / "code.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("ghost/\n")
+
+    workspace = parse_workspace(tmp_path)
+
+    assert {b.name for b in workspace.bricks} == {"real"}
+
+
+def test_brick_with_all_files_gitignored_is_excluded(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    real = tmp_path / "components" / "example" / "real"
+    real.mkdir(parents=True)
+    (real / "core.py").write_text("x = 1")
+    hollow = tmp_path / "components" / "example" / "hollow"
+    hollow.mkdir(parents=True)
+    (hollow / "generated.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("generated.py\n")
+
+    workspace = parse_workspace(tmp_path)
+
+    assert {b.name for b in workspace.bricks} == {"real"}
+
+
+def test_no_ignore_includes_gitignored_files(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    brick = tmp_path / "components" / "example" / "mycomp"
+    brick.mkdir(parents=True)
+    (brick / "core.py").write_text("x = 1")
+    (brick / "generated.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("generated.py\n")
+
+    workspace = parse_workspace(tmp_path, ignore_gitignored=False)
+
+    mycomp = next(b for b in workspace.bricks if b.name == "mycomp")
+    assert {sf.path for sf in mycomp.files} == {
+        "components/example/mycomp/core.py",
+        "components/example/mycomp/generated.py",
+    }
+
+
+def test_no_ignore_includes_gitignored_brick(tmp_path: Path) -> None:
+    _make_workspace(tmp_path)
+    real = tmp_path / "components" / "example" / "real"
+    real.mkdir(parents=True)
+    (real / "core.py").write_text("x = 1")
+    ghost = tmp_path / "components" / "example" / "ghost"
+    ghost.mkdir(parents=True)
+    (ghost / "code.py").write_text("x = 2")
+    (tmp_path / ".gitignore").write_text("ghost/\n")
+
+    workspace = parse_workspace(tmp_path, ignore_gitignored=False)
+
+    assert {b.name for b in workspace.bricks} == {"real", "ghost"}
