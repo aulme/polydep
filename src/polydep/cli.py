@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 
+from polydep.cycles import find_cycles, format_cycle
 from polydep.generate_mermaid import generate_mermaid
 from polydep.graph import build_dependency_graph
 from polydep.models import Edge
@@ -121,17 +122,33 @@ def view(file: Path) -> None:
 )
 @click.option("--root", type=click.Path(exists=True, path_type=Path), default=Path("."))
 @click.option("--no-ignore", is_flag=True, help="Scan all files, ignoring .gitignore rules.")
-def check(expected: Path, root: Path, no_ignore: bool) -> None:
+@click.option(
+    "--no-cycles",
+    is_flag=True,
+    help="Fail if the dependency graph contains any circular dependencies.",
+)
+def check(expected: Path, root: Path, no_ignore: bool, no_cycles: bool) -> None:
     """Compare actual dependencies against an expected graph file."""
-    if not expected.exists():
-        raise click.ClickException(f"{expected} not found.")
-
     try:
         workspace = parse_workspace(root, ignore_gitignored=not no_ignore)
     except FileNotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
 
     dependency_graph = build_dependency_graph(workspace)
+
+    if no_cycles:
+        cycles = find_cycles([(edge.source, edge.target) for edge in dependency_graph.edges])
+        if cycles:
+            click.echo("Check failed.")
+            click.echo()
+            click.echo("Circular dependencies detected:")
+            for cycle in cycles:
+                click.echo(f"  {format_cycle(cycle)}")
+            raise SystemExit(1)
+
+    if not expected.exists():
+        raise click.ClickException(f"{expected} not found.")
+
     actual_edges = {(edge.source, edge.target): edge for edge in dependency_graph.edges}
     expected_edges = parse_mermaid(expected.read_text(encoding="utf-8"))
 

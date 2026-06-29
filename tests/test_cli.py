@@ -219,14 +219,147 @@ def test_check_command_detects_both(sample_project: Path, tmp_path: Path) -> Non
 
 
 def test_check_command_default_file_not_found(tmp_path: Path) -> None:
+    (tmp_path / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(main, ["check"])
+    result = runner.invoke(main, ["check", "--root", str(tmp_path)])
 
     assert result.exit_code == 1
     assert "polydep.expected.mermaid" in result.output
     assert "not found" in result.output
+
+
+# --- check --no-cycles tests ---
+
+
+def _make_cyclic_workspace(root: Path) -> None:
+    (root / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
+    alpha = root / "components" / "example" / "alpha"
+    alpha.mkdir(parents=True)
+    (alpha / "core.py").write_text("from example import beta\n", encoding="utf-8")
+    beta = root / "components" / "example" / "beta"
+    beta.mkdir(parents=True)
+    (beta / "core.py").write_text("from example import alpha\n", encoding="utf-8")
+
+
+def _make_transitive_cycle_workspace(root: Path) -> None:
+    # a -> b -> c -> a: a multi-level cycle where no two bricks import each other directly.
+    (root / "workspace.toml").write_text(
+        '[tool.polylith]\nnamespace = "example"\n', encoding="utf-8"
+    )
+    for brick, imports in (("a", "b"), ("b", "c"), ("c", "a")):
+        package = root / "components" / "example" / brick
+        package.mkdir(parents=True)
+        (package / "core.py").write_text(f"from example import {imports}\n", encoding="utf-8")
+
+
+def test_check_no_cycles_detects_transitive_cycle(tmp_path: Path) -> None:
+    _make_transitive_cycle_workspace(tmp_path)
+    runner = CliRunner()
+    # Every actual edge is declared, so the Mermaid check alone would pass.
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text("graph LR\n  a --> b\n  b --> c\n  c --> a\n", encoding="utf-8")
+
+    result = runner.invoke(
+        main,
+        ["check", "--no-cycles", "--expected", str(expected_file), "--root", str(tmp_path)],
+    )
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "Check failed.\n\nCircular dependencies detected:\n  a -> b -> c -> a\n"
+    )
+
+
+def test_check_no_cycles_fails_even_when_cycle_is_in_mermaid(tmp_path: Path) -> None:
+    _make_cyclic_workspace(tmp_path)
+    runner = CliRunner()
+    # The expected file *declares* the cyclic edges, so the Mermaid check alone would pass.
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text("graph LR\n  alpha --> beta\n  beta --> alpha\n", encoding="utf-8")
+
+    result = runner.invoke(
+        main,
+        ["check", "--no-cycles", "--expected", str(expected_file), "--root", str(tmp_path)],
+    )
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "Check failed.\n\nCircular dependencies detected:\n  alpha -> beta -> alpha\n"
+    )
+
+
+def test_check_no_cycles_takes_priority_over_missing_expected_file(tmp_path: Path) -> None:
+    _make_cyclic_workspace(tmp_path)
+    runner = CliRunner()
+
+    # No expected file exists — the cycle failure must take priority over the file-not-found error.
+    result = runner.invoke(main, ["check", "--no-cycles", "--root", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "Check failed.\n\nCircular dependencies detected:\n  alpha -> beta -> alpha\n"
+    )
+
+
+def test_check_no_cycles_then_runs_mermaid_check_when_acyclic(
+    sample_project: Path, tmp_path: Path
+) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(graph_result.output)
+
+    result = runner.invoke(
+        main,
+        ["check", "--no-cycles", "--expected", str(expected_file), "--root", str(sample_project)],
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Check passed.\n"
+
+
+def test_check_no_cycles_acyclic_still_reports_mermaid_mismatch(
+    sample_project: Path, tmp_path: Path
+) -> None:
+    runner = CliRunner()
+    graph_result = runner.invoke(main, ["graph", "--root", str(sample_project)])
+    content = graph_result.output.replace("  consumer --> kafka\n", "")
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text(content)
+
+    result = runner.invoke(
+        main,
+        ["check", "--no-cycles", "--expected", str(expected_file), "--root", str(sample_project)],
+    )
+
+    assert result.exit_code == 1
+    assert result.output == (
+        "Check failed.\n"
+        "\n"
+        f"Unexpected dependencies (in project but not in {expected_file}):\n"
+        "  consumer --> kafka\n"
+        "    bases/example/consumer/core.py:3  from example import kafka, log\n"
+    )
+
+
+def test_check_without_no_cycles_ignores_cycles(tmp_path: Path) -> None:
+    _make_cyclic_workspace(tmp_path)
+    runner = CliRunner()
+    # Expected file matches the actual (cyclic) edges; without --no-cycles the check passes.
+    expected_file = tmp_path / "expected.mermaid"
+    expected_file.write_text("graph LR\n  alpha --> beta\n  beta --> alpha\n", encoding="utf-8")
+
+    result = runner.invoke(
+        main, ["check", "--expected", str(expected_file), "--root", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Check passed.\n"
 
 
 def test_project_command_all_projects(sample_project: Path) -> None:
