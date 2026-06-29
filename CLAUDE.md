@@ -75,6 +75,7 @@ src/polydep/
   graph.py                # Dependency graph construction from Workspace
   generate_mermaid.py     # Mermaid diagram generation
   parse_mermaid.py        # Mermaid diagram parsing (regex-based edge extraction)
+  cycles.py               # Circular dependency detection (Tarjan SCC + DFS, pure function)
   paths.py                # Path finding between bricks (DFS)
   project_workspace.py    # Project discovery and pyproject.toml parsing
   project_checker.py      # Transitive closure check: missing/extra brick detection
@@ -129,6 +130,8 @@ Finds all paths from source to target brick using DFS with cycle detection. Each
 
 ### `check`
 Compares actual dependency graph against an expected Mermaid file (default: `polydep.expected.mermaid`). Reports unexpected edges (with file/line provenance) and missing edges. Exit codes: 0 = match, 1 = mismatch, 2 = error.
+
+`--no-cycles` adds a circular-dependency gate that runs **before** the Mermaid comparison (after the graph is built, before the expected file is read or existence-checked). It detects all simple cycles — including transitive ones — in the actual dependency graph and fails (exit 1) if any exist, printing each cycle as a closed loop (`a -> b -> c -> a`). Because it inspects the actual graph, a cycle fails even when its edges are declared in the expected Mermaid. When acyclic, the command proceeds with the normal Mermaid comparison, so `check --no-cycles` enforces both in one invocation.
 
 ### `project`
 Checks that each project's `[tool.polylith.bricks]` declares exactly the bricks reachable from its base bricks via transitive closure. Reports missing bricks (needed but not declared) and extra bricks (declared but not needed). `--fix` rewrites the section in place, splitting entries into `# direct` (bases + their 1-hop neighbours) and `# transitive` (rest of closure) blocks, with `# via <importers>` annotations on transitive entries. Exit codes: 0 = all OK or fix applied, 1 = issues found.

@@ -5,7 +5,6 @@ from polydep.models import Brick, BrickType, DependencyGraph, Edge
 from polydep.view import (
     _build_view_data,
     _dependency_graph_to_inputs,
-    _find_cycles,
     _find_groups,
     _generate_html,
 )
@@ -48,26 +47,6 @@ def test_build_view_data_produces_correct_edge_ids() -> None:
 
     edge_ids = {e["data"]["id"] for e in data["edges"]}
     assert edge_ids == {"a__b", "b__c"}
-
-
-# --- _find_cycles ---
-
-
-def test_find_cycles_empty_for_acyclic_graph() -> None:
-    edges = [("a", "b"), ("b", "c")]
-
-    cycles = _find_cycles(edges)
-
-    assert cycles == []
-
-
-def test_find_cycles_detects_simple_cycle() -> None:
-    edges = [("a", "b"), ("b", "c"), ("c", "a")]
-
-    cycles = _find_cycles(edges)
-
-    assert len(cycles) == 1
-    assert set(cycles[0]) == {"a", "b", "c"}
 
 
 # --- _find_groups ---
